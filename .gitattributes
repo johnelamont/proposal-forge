@@ -1,0 +1,9 @@
+# Normalize to LF in the repo and working tree, regardless of core.autocrlf.
+# Dockerfiles and shell scripts run in Linux containers and break with CRLF.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.pdf binary
+*.woff2 binary

@@ -62,7 +62,7 @@
 - Real PostgreSQL (not NoSQL abstraction)
 - Free tier: 50K MAU, 500MB storage
 - Auth integrated with Row-Level Security (RLS) → no separate auth service
-- Postgvector built-in (for RAG embeddings later)
+- pgvector built-in (for RAG embeddings later)
 - Multi-tenant isolation is native (partition by user_id)
 
 **Trade-off:** Project pauses after 7 days inactivity (free tier). Mitigation: Keep-alive cron job (Vercel function once/week).

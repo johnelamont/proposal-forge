@@ -34,7 +34,7 @@ Need to choose backend platform + database.
 - Async FastAPI handles concurrent requests well
 - PostgreSQL with Row-Level Security = native multi-tenant isolation
 - Supabase Auth integrates with Postgres RLS (no separate auth service)
-- Postgvector available for future RAG embeddings
+- pgvector available for future RAG embeddings
 - Dockerfile ready for self-hosting later
 
 **Cons:**
@@ -128,7 +128,7 @@ Need to choose backend platform + database.
 - Async I/O for concurrent Claude API calls
 - Webhook to Zoho demonstrates data thinking
 - Fly.io + Supabase proven, low operational burden
-- Strong portfolio piece (architecture, standardization, AWS independence)
+- Strong portfolio piece (architecture, standardization, vendor independence)
 
 ## Consequences
 
