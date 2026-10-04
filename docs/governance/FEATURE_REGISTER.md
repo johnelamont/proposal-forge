@@ -1,0 +1,131 @@
+# AI Feature Register
+
+Design-time record required by [AI Governance Rules v1.0](AI_GOVERNANCE_RULES.md) and [ADR-004](../ADRs/ADR-004-ai-governance.md). Every AI-assisted feature needs an entry here before it is built. Update entries as designs change; this is a living document.
+
+**Status of this register:** reviewed by John Lamont (2026-10-04), covering features planned in [ARCHITECTURE.md](../ARCHITECTURE.md). Entries marked *Open* have unresolved questions that block the build of that feature.
+
+## Project-level determinations
+
+### Rule 6 — Regulated data
+
+**Determination: does not apply (2026-10-04).** Proposal Forge processes the operator's own Upwork job posts, proposals, and work history. It is not built for or operated on behalf of a client whose environment involves PHI or GDPR special-category data. No BAA is required.
+
+Upwork job posts do not contain client names or other PII/PHI. Re-evaluate if the app is ever offered to other users or used for a healthcare client's data.
+
+### Rule 4 — Upwork
+
+**Determination (2026-10-04):** the app never transfers content into Upwork automatically — automated submission is prohibited by Upwork's ToS. All movement of text between Upwork and the app is a manual copy-paste by the operator. No feature may add Upwork scraping, browser automation, or API submission without a new ADR and a fresh ToS review.
+
+### Rule 9 — AI disclosure
+
+**Determination (2026-10-04): at the operator's discretion.** Prospective clients do not interact with or get processed by an AI system: the operator reviews, edits, and manually submits every proposal under their own name. Whether to mention AI assistance in a given proposal is the operator's judgement. The app does not add disclosure text.
+
+---
+
+## Features
+
+### F1 — Job post parsing
+
+| | |
+|---|---|
+| **Classification** | Standard |
+| **Why** | Extracts fields from text the user pasted; user sees the result before anything else happens. Nothing leaves the app. |
+| **Data sent to Claude (R5)** | Pasted job post text only. Upwork job posts contain no client names or other PII, so no stripping step is needed. |
+| **Failure path (R8)** | Malformed/empty parse → show raw text with an error and a "retry" / "enter fields manually" option. Never store a partial parse as if it were complete. |
+| **ToS / legal (R4)** | Manual copy-paste only; the app does not access Upwork (see project-level Rule 4). |
+
+### F2 — Wheelhouse advisory ("Similar past wins?")
+
+| | |
+|---|---|
+| **Classification** | Standard |
+| **Why** | Advisory to the operator only; the continue/abandon decision is always a manual click. |
+| **Data sent to Claude (R5)** | Parsed job fields + work history summaries (tech stack, vertical, complexity, outcome). Not: client names, contract amounts beyond budget bands. |
+| **Failure path (R8)** | On error, show "No advisory available" explicitly; continue/abandon still works. |
+| **Confidence (R3)** | Not an automated operation, but show match strength (e.g., number of comparable outcomes) so a thin-evidence advisory is visible as such. |
+
+### F3 — Proposal drafting (cover letter, Q&A answers)
+
+| | |
+|---|---|
+| **Classification** | **High-stakes** |
+| **Why** | Public-facing content sent to prospective clients; affects the operator's reputation and income. |
+| **Approval (R1)** | Copying is the approval. Under each Copy icon, a persistent statement reads: *"Copying this content counts as your approval of it."* Clicking Copy is the affirmative action — there is no separate Approve button and nothing is pre-copied. The app never submits to Upwork. |
+| **Audit (R2)** | Every copy writes a row to an append-only `proposal_approvals` table: `proposal_id`, `draft_version_id`, `section` (or `all`), `approved_by` (auth user id), `approved_at`, `content_hash`. Draft versions are append-only (`draft_versions[]`); editing after a copy creates a new version, and copying that version writes a new approval row. |
+| **Data sent to Claude (R5)** | Parsed job fields, proposal form questions, relevant work history summaries, RAG outcome excerpts. Not: other clients' names or contact details, rates from unrelated contracts. |
+| **Failure path (R8)** | Drafting: error, empty, or truncated output → no draft shown as complete; user sees the error and can retry or write manually. Section-level refine failures leave the previous version intact. Audit: the clipboard write happens immediately (browsers require it inside the click), and the approval row is written in the same handler; if that write fails, show a visible "approval not logged — retry" banner and keep retrying. Never fail silently. |
+
+### F4 — Price quote
+
+| | |
+|---|---|
+| **Classification** | **High-stakes** |
+| **Why** | Financial: binds the operator to a price if accepted. |
+| **Approval / audit (R1, R2)** | Covered by F3 — copying the quote is its approval and is logged the same way. The quote is shown alongside the historical pricing evidence it was based on. |
+| **Failure path (R8)** | If no comparable pricing data exists, say so and leave the quote blank for manual entry rather than inventing a number. |
+
+### F5 — Historical project analysis (local directory)
+
+| | |
+|---|---|
+| **Classification** | Standard for extraction; output becomes high-stakes when used in F7 |
+| **Source** | A local project directory chosen by the operator. The app does not read GitHub repos directly. |
+| **Data sent to Claude (R5)** | Highest-risk feature for data scope: project folders can contain secrets, `.env` files, and client data. Send only README/docs, dependency manifests, and a file tree. Exclude `.env*`, credentials, data files, and anything git-ignored. Never send a whole directory. |
+| **Failure path (R8)** | Show extracted summary for user confirmation before saving to `work_history`; failed analysis leaves the project unsaved with an error. |
+| **ToS / legal (R4)** | No external system is accessed. For client projects, check the client contract does not restrict sharing its code or docs with an AI processor before analyzing it. |
+
+### F6 — Zoho Lead creation (webhook)
+
+| | |
+|---|---|
+| **Classification** | **High-stakes** (CRM write; financial pipeline record) |
+| **Trigger** | The operator clicks **Create Lead** after submitting the proposal on Upwork. Nothing else signals that the copy-paste is done. Keyed on `upwork_job_id`. Field mapping: [ZOHO_INTEGRATION.md](../ZOHO_INTEGRATION.md). |
+| **Automated operation (R3)** | Each AI-derived Lead field (`Industry`, `Job_Type`, `Tools`) carries a confidence value. Threshold: *to be set at design of this feature, per field, and recorded here.* The operator sees the payload before it is sent; below-threshold fields are flagged and must be confirmed or edited before **Create Lead** is enabled. |
+| **Approval / audit (R1, R2)** | Clicking **Create Lead** is the affirmative action. Log each attempt (payload hash, response status, timestamp, triggering user). |
+| **Data sent (R5)** | No client name or PII is known at the proposal stage: `Last_Name` is always `"TBD"`; contact fields are never sent. |
+| **Failure path (R8)** | POST failure → proposal stays `submitted` with a visible "Lead not created — retry"; never drop silently. Repeat clicks upsert on `upwork_job_id`, so no duplicate Leads. **Create Lead** is disabled until all required fields (`Industry` plus the list in ZOHO_INTEGRATION.md) are filled; a Lead is never sent incomplete. |
+| **ToS / legal (R4)** | Operator's own Zoho account via its documented REST API and OAuth (create/update on Leads only) and its own Deluge functions — permitted. Review on Zoho API version or terms changes. |
+
+### F7 — PDF portfolio export
+
+| | |
+|---|---|
+| **Classification** | **High-stakes** |
+| **Why** | Public-facing: attached to job applications; misstatements affect reputation. |
+| **Approval / audit (R1, R2)** | Preview + explicit approve before download; record who exported what (content hash) and when. |
+| **Data (R5)** | Exclude client names unless the operator has marked that client as OK to name. |
+| **Failure path (R8)** | Generation errors halt the export; no partial PDF. |
+
+### F8 — Outcome feedback into RAG
+
+| | |
+|---|---|
+| **Classification** | Standard |
+| **Why** | Records what happened to a proposal so future drafts (F2, F3) can learn from it ([ADR-003](../ADRs/ADR-003-rag-learning.md)). No AI call when an outcome is recorded; the effect on AI output comes later, through retrieval. |
+| **Outcomes** | `won`, `lost`, or `withdrawn` (operator withdrew; recorded and indexed but excluded from win/loss rates). Clients rarely decline explicitly; a proposal usually goes quiet, and a follow-up on Upwork shows the client hired someone else (most common) or closed the job. So `lost` carries a `lost_reason`: `hired_other` or `job_closed`. Until an outcome is recorded, the proposal stays `submitted`. |
+| **Who records it (R1)** | Always the operator, manually, in Zoho: the **Won** button, or a `Lead_Status` change for lost/withdrawn (trigger TBD). The app never infers an outcome. |
+| **Source** | Per [ADR-005](../ADRs/ADR-005-zoho-integration.md): Zoho pushes to `POST /api/integrations/zoho/outcome` with a per-user secret; one insert-only `SECURITY DEFINER` function writes the outcome. [Contract](../ZOHO_INTEGRATION.md#outcome-in--pushed-by-zoho). Allow-list confirmed. *Open:* the Zoho-side trigger for lost/withdrawn (the endpoint already accepts them). |
+| **What gets indexed (R5)** | The version the operator actually copied (latest `proposal_approvals` row), not the latest draft — that is what the client saw. Plus parsed job fields, industry, budget band, quote, outcome, and the allow-listed Lead fields sent with the outcome. Zoho sends no client identity, and the endpoint rejects any field outside the allow-list. |
+| **Audit (R2)** | Outcomes go into an append-only `proposal_outcomes` history (outcome, recorded_by or source, recorded_at); `proposals.status` and `rag_index` reflect the latest. A corrected outcome (e.g., `lost` → `won`) adds a row, never overwrites. |
+| **Failure path (R8)** | Outcome, status, and `rag_index` row are written in one transaction, so it all succeeds or all fails, and Zoho gets the error. The **Won** button shows the operator the result; the lost/withdrawn trigger, once chosen, must do the same. An unmatched job ID is held in a review queue (`202`). The app lists proposals still `submitted` after N days, so a missed push is visible. |
+
+---
+
+## Adding a feature
+
+Copy this template:
+
+```markdown
+### FN — Name
+
+| | |
+|---|---|
+| **Classification** | Standard / High-stakes (ambiguous → high-stakes) |
+| **Why** | |
+| **Approval / audit (R1, R2)** | High-stakes only |
+| **Confidence (R3)** | If it drives automated data operations: signal + threshold |
+| **Data sent to Claude (R5)** | Fields included, fields excluded |
+| **Failure path (R8)** | No result / malformed / error / below threshold |
+| **ToS / legal (R4)** | External systems touched and determination |
+| **Disclosure (R9)** | If third parties are processed by or receive AI output |
+```

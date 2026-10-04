@@ -44,15 +44,16 @@ Paste Upwork proposal form
 ### Stage 3: Copy & Submit
 
 ```
-Copy-to-clipboard buttons (mobile-friendly)
-→ Paste back into Upwork
-→ Mark status: submitted
+Copy-to-clipboard buttons (mobile-friendly; each copy is logged as approval)
+→ Paste into Upwork and submit
+→ Click Create Lead → status: submitted, Lead created in Zoho CRM
 ```
 
 ### Stage 4: Track Outcome
 
 ```
-Later: Mark as won/lost/no response
+Later: follow up on Upwork, record the result on the Lead in Zoho
+→ Zoho posts the outcome to the app (Won button, or Lead status for lost/withdrawn), matched on Upwork Job ID
 → Proposal + outcome indexed for learning
 → Next similar proposal: Claude says "You won 5 of 7 like this"
 ```
@@ -60,11 +61,11 @@ Later: Mark as won/lost/no response
 ## Features
 
 - **Dual-parse job posts** — Handles mobile and desktop Upwork copy-paste formats
-- **Historical projects** — Add your past projects (point to GitHub repo or local directory) → Claude analyzes code/docs → extracts tech stack, complexity, type
+- **Historical projects** — Add your past projects (point to a local project directory) → Claude analyzes code/docs → extracts tech stack, complexity, type
 - **Real-time advisor** — Compare incoming job to your past projects; show similar outcomes
 - **Analytics** — Win rate by vertical, budget range, tech stack frequency
 - **RAG learning loop** — Each proposal outcome improves future drafts
-- **Zoho webhook** — When proposal is won, sync to Zoho CRM with standardized schema
+- **Zoho integration** — Create a Lead from a submitted proposal; Zoho posts won/lost/withdrawn back to the app for the learning loop. Keyed on Upwork Job ID
 - **PDF portfolio export** — Generate report of wins, verticals, tech stack for attaching to job applications
 - **Mobile-first PWA** — Install on home screen (iOS/Android), offline support
 - **Copy-to-clipboard** — Frustration-free paste back to Upwork
@@ -75,7 +76,11 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for free-tier setup (Vercel, Fly.io, Sup
 
 ## Architecture
 
-See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design, [WEBHOOK_SCHEMA.md](docs/WEBHOOK_SCHEMA.md) for Zoho integration.
+See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design, [ZOHO_INTEGRATION.md](docs/ZOHO_INTEGRATION.md) for Zoho integration.
+
+## Responsible AI
+
+Built to [Lamont Consulting AI Governance Rules](docs/governance/AI_GOVERNANCE_RULES.md) ([ADR-004](docs/ADRs/ADR-004-ai-governance.md)). Every AI feature is classified before it is built — see the [feature register](docs/governance/FEATURE_REGISTER.md). In practice: copying a proposal or quote counts as approving it, and every copy and portfolio export is logged to an append-only audit record; nothing is ever auto-submitted to Upwork; only the minimum data needed reaches Claude; and every AI failure is surfaced, never silent.
 
 ## Development
 

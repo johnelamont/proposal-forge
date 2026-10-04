@@ -18,11 +18,11 @@
                     └──────┬──────┘
                            │
         ┌──────────────────┼──────────────────┐
-        ↓                  ↓                  ↓
+        ↓                  ↓                  ↕
     ┌────────┐      ┌──────────┐      ┌──────────┐
-    │Supabase│      │ Claude   │      │Zoho      │
-    │Postgres│      │ API      │      │Webhook   │
-    │+ Auth  │      │          │      │(outbound)│
+    │Supabase│      │ Claude   │      │Zoho CRM  │
+    │Postgres│      │ API      │      │lead out, │
+    │+ Auth  │      │          │      │outcome in│
     └────────┘      └──────────┘      └──────────┘
 ```
 
@@ -47,7 +47,7 @@
 
 **Rationale:**
 - Claude API has excellent Python SDK
-- Async I/O for multiple concurrent API calls (Claude parse, Supabase, Zoho webhook)
+- Async I/O for multiple concurrent API calls (Claude parse, Supabase, Zoho)
 - You're comfortable with Python
 - Fly.io free tier includes 3 shared-cpu VMs
 - Easy Docker deployment
@@ -108,33 +108,37 @@ def parse_upwork_job(raw: str) -> dict:
 
 **Trade-off:** Quality improves slowly (needs 30+ outcomes to matter). Mitigation: Acceptable for MVP; you'll hit 30 proposals in 2-3 months.
 
-### Webhook Schema: Versioned, Standardized
+### Zoho Integration: Lead Out, Outcome In
 
-**Decision:** When proposal marked "won," POST to Zoho webhook with standardized JSON.
+**Decision:** Exchange data with the operator's Zoho CRM through the Zoho CRM REST API, keyed on the Upwork Job ID. Transport, auth, and tenancy are in [ADR-005](ADRs/ADR-005-zoho-integration.md). Field mapping and Zoho-side setup are in [ZOHO_INTEGRATION.md](ZOHO_INTEGRATION.md).
 
-**Rationale:**
-- Shows data thinking (not ad-hoc integration)
-- Zoho can schema-validate incoming proposals
-- Versioning allows future breaking changes
-- Self-documenting (schema is the contract)
-- Decouples app from Zoho CRM internals
+1. **Lead out.** When the proposal has been pasted into Upwork and submitted, the user clicks **Create Lead**. The backend upserts a Lead in Zoho.
+2. **Outcome in.** The user later records the result on the Lead in Zoho: a **Won** button, or a `Lead_Status` of `Lost Lead`, `Job Closed`, or `Withdrawn`. Zoho posts it to the app, which records it and indexes it for RAG.
 
-**Schema:**
-```json
-{
-  "proposal_id": "uuid",
-  "client_name": "string",
-  "job_title": "string",
-  "budget_min": 5000,
-  "budget_max": 15000,
-  "vertical": "string",
-  "tech_stack": ["Zoho CRM", "Python"],
-  "estimated_hours": 120,
-  "status": "won",
-  "proposal_url": "upwork.com/...",
-  "created_at": "2026-09-27T14:30:00Z"
-}
-```
+**Why it works this way:**
+- **Nobody knows the outcome at proposal time.** The app can't know a proposal is won; that comes weeks later, if at all. The most it can do at submission is create a Lead.
+- **A button, not an automatic trigger.** Nothing signals when the copy-pasting into Upwork is done, and the app never touches Upwork (its ToS prohibits automated submission). Clicking **Create Lead** is that signal. It also marks the proposal `submitted`.
+- **Zoho is where outcomes are decided.** The user follows up on Upwork and updates the Lead in Zoho (usually the client hired someone else or closed the job). Zoho pushes it to the app rather than asking the user to record it twice.
+- **Push from Zoho, with Zoho choosing the fields.** Recording a win is a deliberate click in Zoho, and by then the Lead may hold client identity. So Zoho posts only an allow-listed set of fields, and the app rejects anything else. The inbound call has no user JWT, so it authenticates with a per-user secret and can execute exactly one insert-only database function — no service-role key. See ADR-005 for the pull alternative.
+- **The Upwork Job ID is the shared key.** Both systems already have it (`Upwork_Job_ID` exists on the Leads module). Upsert on it makes **Create Lead** idempotent: pressing it twice can't create duplicate Leads.
+- **Mapping is configuration.** Zoho picklists change. Field mappings are versioned in this repo, the Deluge function source is kept here too, and both are validated against the Upwork layout's picklists.
+
+**Upwork Job ID capture:** extracted during job parsing when the pasted text includes the job URL; otherwise the user pastes the job URL or ID. It's required before **Create Lead** is enabled, and unique per user (one proposal per job).
+
+**Lead out, in brief:**
+- Created on the Upwork layout with its required fields: `Lead_Status` = `New Lead`, `Last_Name` = `TBD`, `Lead_Source` = `Upwork`. No client identity or other PII is sent.
+- The Lead carries the job details, the approved proposal text, the quote, and the parsed job attributes ([full mapping](ZOHO_INTEGRATION.md#lead-out--on-create-lead)).
+- The user previews the Lead before sending. AI-derived fields (including `Industry`) below their confidence threshold are flagged and must be confirmed ([feature register F6](governance/FEATURE_REGISTER.md)).
+- **Create Lead** stays disabled until required fields (`Industry` and others, [listed here](ZOHO_INTEGRATION.md#required-before-create-lead)) are filled. An incomplete Lead is never sent.
+- `Company` is left blank; it isn't known until a proposal goes to contract, and it's never read back.
+- Sync state is tracked on the proposal (`pending` / `created` / `failed`). A failed call leaves the proposal `submitted` with a visible "Lead not created — retry".
+
+**Outcome in, in brief** ([contract](ZOHO_INTEGRATION.md#outcome-in--pushed-by-zoho)):
+- Zoho calls `POST /api/integrations/zoho/outcome` with the outcome (`won`, `withdrawn`, or `lost` with a `lost_reason` of `hired_other` or `job_closed`), the Upwork Job ID, and allow-listed Lead fields.
+- One `SECURITY DEFINER` function matches the proposal, appends to `proposal_outcomes`, and writes the `rag_index` row from the version that was actually copied, all in one transaction.
+- The **Won** button shows the operator the result (recorded, held for review, or the error). An unmatched job ID is held in a review queue, never dropped. The app lists proposals still `submitted` after N days, so missed outcomes are visible.
+
+**Trade-off:** One extra click per proposal (Create Lead), Zoho OAuth for Lead creation, a public endpoint to secure, and two Deluge functions deployed by hand. In return, outcomes are recorded once, where the user already works. The RAG stays current without double entry, and the app never has read access to client data in Zoho.
 
 ### Mobile: PWA Instead of Native App
 
@@ -173,18 +177,28 @@ def parse_upwork_job(raw: str) -> dict:
    → /api/refine-section (Claude edits one Q&A, preserves others)
    → New version appended to draft_versions[]
 
-5. User copies all and pastes back to Upwork
+5. User copies sections and pastes them into Upwork
+   → Each copy is logged as approval of that version (proposal_approvals)
 
-6. User marks submitted
+6. User submits on Upwork, then clicks Create Lead in the app
    → Status: submitted
    → Similar_past_projects snapshot saved
+   → Lead payload reviewed (low-confidence fields confirmed)
+   → Upsert Lead in Zoho (Last_Name "TBD", keyed on Upwork_Job_ID)
+   → Lead sync state: created, or failed → visible retry
 
-7. Later: user marks outcome (won/lost/no_response)
-   → Status: won
-   → Entry added to rag_index
-   → If won and zoho_token set: POST to Zoho webhook
+7. Weeks later: user follows up on Upwork and records the result in Zoho
+   → Won: clicks the Won button on the Lead
+   → Lost / withdrawn: sets Lead_Status (Lost Lead, Job Closed, Withdrawn)
 
-8. Next proposal on same vertical:
+8. Zoho posts to POST /api/integrations/zoho/outcome (per-user secret)
+   → Allow-listed Lead fields only; anything else rejected
+   → Matched on upwork_job_id (unmatched → review queue)
+   → Outcome appended to proposal_outcomes; status: won | lost | withdrawn
+   → rag_index updated from the copied (approved) version
+   → Won button shows the result to the user
+
+9. Next proposal on same vertical:
    → Query rag_index for similar outcomes
    → Claude advisor: "You've won 5 of 7 like this"
 ```
@@ -192,13 +206,17 @@ def parse_upwork_job(raw: str) -> dict:
 ## Tables & RLS
 
 **proposals**
-- Stores job posts, proposal drafts, outcomes
+- Stores job posts, proposal drafts, current status, `upwork_job_id` (unique per user), Zoho lead sync state
 - RLS: Users see only own proposals
 
 **work_history**
 - Your historical projects (manually added via modal)
 - Extracted tech, complexity, outcome
 - RLS: Users see only own work history
+
+**proposal_approvals** / **proposal_outcomes**
+- Append-only audit: each copy (approval) and each outcome received
+- RLS: Users see only own rows; no updates or deletes
 
 **rag_index**
 - Denormalized view of proposal outcomes (for RAG queries)
@@ -241,13 +259,18 @@ def parse_upwork_job(raw: str) -> dict:
 proposal-forge/
 ├── docs/
 │   ├── ARCHITECTURE.md (this file)
-│   ├── WEBHOOK_SCHEMA.md
+│   ├── ZOHO_INTEGRATION.md
 │   ├── DEPLOYMENT.md
 │   ├── RAG.md
+│   ├── governance/
+│   │   ├── AI_GOVERNANCE_RULES.md
+│   │   └── FEATURE_REGISTER.md
 │   └── ADRs/ (Architecture Decision Records)
 │       ├── ADR-001-fastapi-supabase.md
 │       ├── ADR-002-pwa-vs-native.md
-│       └── ADR-003-rag-learning.md
+│       ├── ADR-003-rag-learning.md
+│       ├── ADR-004-ai-governance.md
+│       └── ADR-005-zoho-integration.md
 ├── frontend/
 │   ├── pages/
 │   ├── components/
