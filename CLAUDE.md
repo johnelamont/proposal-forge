@@ -8,18 +8,15 @@ Upwork proposal assistant: parse job posts, draft proposals with the Claude API,
 - `docs/ARCHITECTURE.md` — system design and data flow
 - `docs/ADRs/` — decisions. Read the relevant ADR before changing stack, auth, or the learning approach. New decisions get a new ADR (`ADR-NNN-short-name.md`), not edits to accepted ones.
 - `docs/governance/` — AI governance rules (`AI_GOVERNANCE_RULES.md`) and the per-feature register (`FEATURE_REGISTER.md`). See below.
-- `frontend/`, `backend/`, `supabase/` — planned, not yet created. See *Scaffolding* below.
+- `backend/` — FastAPI on Python 3.12, managed with uv. `app/main.py` (app factory), `app/routes/` (one module per resource), `app/services/` (the only home for Claude and Zoho clients), `app/core/config.py` (pydantic-settings from `.env`), `tests/`. Ruff for lint and format, pytest, Dockerfile for Fly.io.
+- `frontend/` — Next.js App Router + TypeScript under `src/`, Tailwind, ESLint + Prettier. Supabase auth via `src/lib/supabase/` (email + password; magic link or OAuth can be added later). Deploys to Vercel.
+- `supabase/` — Supabase CLI project. Schema lives in `supabase/migrations/` (SQL, versioned); local stack runs in Docker with `supabase start`.
+- `.github/workflows/ci.yml` — on every PR and push to `main`: Ruff + pytest; ESLint + Prettier + `tsc` + `next build`.
+- Full tree and local setup commands: ARCHITECTURE.md *Repository Structure* and README *Development*.
 
-## Scaffolding (next step — agreed 2026-10-04)
+## Status
 
-The next task is the empty, runnable skeleton. No AI features yet; those start with F1 and go through the governance gates.
-
-- `backend/`: FastAPI, managed with uv (Python 3.12). Layout `app/main.py`, `app/routes/`, `app/services/` (future Claude and Zoho clients), `app/core/config.py` (settings from `.env`). `/health` endpoint, Ruff, pytest, Dockerfile, `.env.example`.
-- `frontend/`: Next.js App Router + TypeScript, `src/` directory, Tailwind, ESLint + Prettier, Supabase auth client (email + password, agreed 2026-10-06; magic link or OAuth can be added later), one placeholder page.
-- `supabase/`: Supabase CLI project (`supabase/migrations/`, local stack in Docker). This replaces the originally planned `database/migrations/`; update ARCHITECTURE.md's repo structure to match.
-- `.github/workflows/`: CI on PRs: Ruff + pytest, ESLint + `tsc` + `next build`.
-- README *Development* section: rewrite with Windows-correct commands (uv, npm, Supabase CLI).
-- Work on a branch and open a PR; don't commit to `main` directly.
+Scaffolding (empty, runnable skeleton) merged 2026-10-06. No AI features exist yet; the first is F1 (job post parsing), which starts with its governance register entry, then the first migration.
 
 ## AI governance (mandatory)
 
@@ -42,6 +39,7 @@ Everything built here follows Lamont Consulting AI Governance Rules v1.0 (`docs/
 
 ## Conventions
 
+- Work on a branch and open a PR; never commit to `main` directly. PRs are squash-merged after CI passes and the operator says so.
 - Secrets only in `.env` files (git-ignored); commit a `.env.example` with names, never values.
 - Python: Ruff for lint and format. TypeScript: ESLint + Prettier.
 - Supabase RLS is the tenant boundary: backend calls on behalf of a user must use that user's JWT, not the service-role key.
