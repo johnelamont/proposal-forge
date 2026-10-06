@@ -255,44 +255,66 @@ def parse_upwork_job(raw: str) -> dict:
 
 ## Repository Structure
 
+Three deployable units (`frontend/`, `backend/`, `supabase/`), each self-contained with its own tooling, plus docs and CI. Entries marked *(planned)* do not exist yet; the three code directories arrive together in the scaffolding PR.
+
 ```
 proposal-forge/
 ├── docs/
-│   ├── ARCHITECTURE.md (this file)
-│   ├── ZOHO_INTEGRATION.md
-│   ├── DEPLOYMENT.md
-│   ├── RAG.md
+│   ├── ARCHITECTURE.md              (this file)
+│   ├── ZOHO_INTEGRATION.md          field mapping, Deluge contract
+│   ├── DEPLOYMENT.md                (planned) Vercel + Fly.io + Supabase setup
+│   ├── RAG.md                       (planned) retrieval design and index schema
 │   ├── governance/
 │   │   ├── AI_GOVERNANCE_RULES.md
-│   │   └── FEATURE_REGISTER.md
-│   └── ADRs/ (Architecture Decision Records)
+│   │   └── FEATURE_REGISTER.md      per-feature gate; must be satisfied before a build
+│   └── ADRs/
 │       ├── ADR-001-fastapi-supabase.md
 │       ├── ADR-002-pwa-vs-native.md
 │       ├── ADR-003-rag-learning.md
 │       ├── ADR-004-ai-governance.md
 │       └── ADR-005-zoho-integration.md
-├── frontend/
-│   ├── pages/
-│   ├── components/
-│   ├── lib/
+├── frontend/                        (planned) Next.js App Router + TypeScript, deployed to Vercel
+│   ├── src/
+│   │   ├── app/                     routes: layout.tsx, page.tsx, globals.css
+│   │   ├── components/
+│   │   └── lib/
+│   │       └── supabase/            browser + server auth clients
 │   ├── public/
 │   ├── package.json
-│   └── next.config.js
-├── backend/
-│   ├── main.py
-│   ├── routes/
-│   ├── services/
+│   ├── next.config.ts
+│   ├── tsconfig.json
+│   ├── eslint.config.mjs
+│   ├── .prettierrc
+│   └── .env.example                 NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, API base URL
+├── backend/                         (planned) FastAPI, Python 3.12, managed with uv, deployed to Fly.io
+│   ├── app/
+│   │   ├── main.py                  app factory, router registration
+│   │   ├── core/
+│   │   │   └── config.py            settings loaded from .env
+│   │   ├── routes/                  one module per resource; /health first
+│   │   └── services/                Claude client, Zoho client (added with F1 and F6)
 │   ├── tests/
-│   ├── requirements.txt
-│   └── Dockerfile
-├── database/
-│   └── migrations/
-│       ├── 001_create_proposals.sql
-│       ├── 002_create_work_history.sql
-│       └── 003_create_rag_index.sql
-├── docker-compose.yml
-├── Dockerfile
+│   ├── pyproject.toml               deps + Ruff config
+│   ├── uv.lock
+│   ├── Dockerfile
+│   └── .env.example                 SUPABASE_URL, SUPABASE_JWT_SECRET, ANTHROPIC_API_KEY, ...
+├── supabase/                        (planned) Supabase CLI project; local stack via `supabase start`
+│   ├── config.toml
+│   └── migrations/                  versioned SQL; empty until F1 adds the first tables
+├── .github/
+│   └── workflows/
+│       └── ci.yml                   (planned) Ruff + pytest; ESLint + tsc + next build
+├── .editorconfig
+├── .gitattributes                   LF line endings
+├── .gitignore
+├── .vscode/
+├── CLAUDE.md                        working agreement for AI-assisted development in this repo
 ├── README.md
 └── LICENSE
-
 ```
+
+Notes:
+
+- There is no root `Dockerfile` or `docker-compose.yml`. The only container image is the backend's; the local database is the Supabase CLI's own Docker stack.
+- Secrets live in git-ignored `.env` files beside each `.env.example`. Claude API calls are made only from `backend/app/services/`, never from the frontend.
+- Schema changes are Supabase migrations and are the tenant boundary (RLS). A high-stakes feature's approval/audit table ships in the same migration as the feature ([FEATURE_REGISTER.md](governance/FEATURE_REGISTER.md)).
