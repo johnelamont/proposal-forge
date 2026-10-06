@@ -15,7 +15,7 @@ Upwork proposal assistant: parse job posts, draft proposals with the Claude API,
 The next task is the empty, runnable skeleton. No AI features yet; those start with F1 and go through the governance gates.
 
 - `backend/`: FastAPI, managed with uv (Python 3.12). Layout `app/main.py`, `app/routes/`, `app/services/` (future Claude and Zoho clients), `app/core/config.py` (settings from `.env`). `/health` endpoint, Ruff, pytest, Dockerfile, `.env.example`.
-- `frontend/`: Next.js App Router + TypeScript, `src/` directory, Tailwind, ESLint + Prettier, Supabase auth client, one placeholder page.
+- `frontend/`: Next.js App Router + TypeScript, `src/` directory, Tailwind, ESLint + Prettier, Supabase auth client (email + password, agreed 2026-10-06; magic link or OAuth can be added later), one placeholder page.
 - `supabase/`: Supabase CLI project (`supabase/migrations/`, local stack in Docker). This replaces the originally planned `database/migrations/`; update ARCHITECTURE.md's repo structure to match.
 - `.github/workflows/`: CI on PRs: Ruff + pytest, ESLint + `tsc` + `next build`.
 - README *Development* section: rewrite with Windows-correct commands (uv, npm, Supabase CLI).

@@ -72,7 +72,7 @@ Later: follow up on Upwork, record the result on the Lead in Zoho
 
 ## Getting Started
 
-See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for free-tier setup (Vercel, Fly.io, Supabase).
+Local setup is under [Development](#development). Hosted deployment (Vercel, Fly.io, Supabase) is not set up yet; `docs/DEPLOYMENT.md` will be added with the first deploy.
 
 ## Architecture
 
@@ -84,22 +84,45 @@ Built to [Lamont Consulting AI Governance Rules](docs/governance/AI_GOVERNANCE_R
 
 ## Development
 
-```bash
-# Frontend
-cd frontend
-npm install
-npm run dev
+Developed on Windows 11; commands below are PowerShell and work unchanged in Git Bash. Prerequisites: [Node 24 LTS](https://nodejs.org), [uv](https://docs.astral.sh/uv/), [Docker Desktop](https://www.docker.com/products/docker-desktop/), and the [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) (`scoop install supabase`; not installable with `npm install -g`).
 
-# Backend
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python -m uvicorn main:app --reload
+Three parts run side by side: the local Supabase stack (database + auth), the FastAPI backend, and the Next.js frontend.
 
-# Database
-# Supabase console: https://app.supabase.com
+### 1. Database and auth (local Supabase stack)
+
+```powershell
+supabase start     # first run pulls the Docker images (a few minutes); prints API URL, anon key, JWT secret
+supabase status    # prints them again later
+supabase stop      # when done
 ```
+
+Studio (database UI): <http://127.0.0.1:54323>. Schema changes are SQL files in `supabase/migrations/`, applied on `supabase start` or with `supabase db reset`.
+
+### 2. Backend (FastAPI)
+
+```powershell
+cd backend
+Copy-Item .env.example .env          # then set SUPABASE_JWT_SECRET from `supabase status`
+uv sync                              # creates .venv and installs locked dependencies
+uv run uvicorn app.main:app --reload # http://127.0.0.1:8000/health, docs at /docs
+```
+
+Checks: `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest`.
+
+### 3. Frontend (Next.js)
+
+```powershell
+cd frontend
+Copy-Item .env.example .env.local    # then set NEXT_PUBLIC_SUPABASE_ANON_KEY from `supabase status`
+npm install
+npm run dev                          # http://localhost:3000
+```
+
+Checks: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm run build`.
+
+### CI
+
+GitHub Actions ([ci.yml](.github/workflows/ci.yml)) runs the same backend and frontend checks on every pull request and on pushes to `main`.
 
 ## License
 
