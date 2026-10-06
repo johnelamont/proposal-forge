@@ -8,7 +8,18 @@ Upwork proposal assistant: parse job posts, draft proposals with the Claude API,
 - `docs/ARCHITECTURE.md` — system design and data flow
 - `docs/ADRs/` — decisions. Read the relevant ADR before changing stack, auth, or the learning approach. New decisions get a new ADR (`ADR-NNN-short-name.md`), not edits to accepted ones.
 - `docs/governance/` — AI governance rules (`AI_GOVERNANCE_RULES.md`) and the per-feature register (`FEATURE_REGISTER.md`). See below.
-- `frontend/` (Next.js + TypeScript), `backend/` (FastAPI), `database/migrations/` — planned, not yet created.
+- `frontend/`, `backend/`, `supabase/` — planned, not yet created. See *Scaffolding* below.
+
+## Scaffolding (next step — agreed 2026-10-04)
+
+The next task is the empty, runnable skeleton. No AI features yet; those start with F1 and go through the governance gates.
+
+- `backend/`: FastAPI, managed with uv (Python 3.12). Layout `app/main.py`, `app/routes/`, `app/services/` (future Claude and Zoho clients), `app/core/config.py` (settings from `.env`). `/health` endpoint, Ruff, pytest, Dockerfile, `.env.example`.
+- `frontend/`: Next.js App Router + TypeScript, `src/` directory, Tailwind, ESLint + Prettier, Supabase auth client, one placeholder page.
+- `supabase/`: Supabase CLI project (`supabase/migrations/`, local stack in Docker). This replaces the originally planned `database/migrations/`; update ARCHITECTURE.md's repo structure to match.
+- `.github/workflows/`: CI on PRs: Ruff + pytest, ESLint + `tsc` + `next build`.
+- README *Development* section: rewrite with Windows-correct commands (uv, npm, Supabase CLI).
+- Work on a branch and open a PR; don't commit to `main` directly.
 
 ## AI governance (mandatory)
 
@@ -24,7 +35,9 @@ Everything built here follows Lamont Consulting AI Governance Rules v1.0 (`docs/
 ## Environment
 
 - Windows 11, VS Code, PowerShell + Git Bash. Give Windows-correct commands (no `source venv/bin/activate`).
-- Repo lives in OneDrive and is used from two machines. Keep machine-specific, heavy directories (virtualenvs, `node_modules`, `.next`) out of the synced tree.
+- Repo lives at `C:\dev\proposal-forge`, outside OneDrive. It is used from two machines and GitHub is the only sync: commit and push before switching machines, pull on arrival. Don't move it back into OneDrive (synced `.venv` / `node_modules` / `.next` cause conflicts).
+- Tooling installed: Node 24 LTS, uv, Docker Desktop, Supabase CLI (via Scoop), GitHub CLI (authenticated), Vercel CLI, Scoop.
+- Before first deploy (not needed for local development): create a Supabase account and hosted project, then `supabase link`; `vercel login`; install `flyctl` and `fly auth login`.
 - Line endings are LF (`.gitattributes`, `.editorconfig`); containers run Linux.
 
 ## Conventions
