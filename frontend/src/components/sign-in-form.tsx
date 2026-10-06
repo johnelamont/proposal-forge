@@ -15,17 +15,23 @@ export function SignInForm() {
   async function submit(mode: "signIn" | "signUp") {
     setBusy(true);
     setError(null);
-    const supabase = createClient();
-    const { error } =
-      mode === "signIn"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
-    setBusy(false);
-    if (error) {
-      setError(error.message);
-      return;
+    try {
+      const supabase = createClient();
+      const { error } =
+        mode === "signIn"
+          ? await supabase.auth.signInWithPassword({ email, password })
+          : await supabase.auth.signUp({ email, password });
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      router.refresh();
+    } catch (e) {
+      // Configuration or network failures: show them, never swallow them.
+      setError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
     }
-    router.refresh();
   }
 
   return (
