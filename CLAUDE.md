@@ -36,7 +36,8 @@ Everything built here follows Lamont Consulting AI Governance Rules v1.0 (`docs/
 
 - Windows 11, VS Code, PowerShell + Git Bash. Give Windows-correct commands (no `source venv/bin/activate`).
 - Repo lives at `C:\dev\proposal-forge`, outside OneDrive. It is used from two machines and GitHub is the only sync: commit and push before switching machines, pull on arrival. Don't move it back into OneDrive (synced `.venv` / `node_modules` / `.next` cause conflicts).
-- Tooling installed: Node 24 LTS, uv, Docker Desktop, GitHub CLI (authenticated), Vercel CLI (not yet logged in; run `vercel login` before first deploy).
+- Tooling installed: Node 24 LTS, uv, Docker Desktop, Supabase CLI (via Scoop), GitHub CLI (authenticated), Vercel CLI, Scoop.
+- Before first deploy (not needed for local development): create a Supabase account and hosted project, then `supabase link`; `vercel login`; install `flyctl` and `fly auth login`.
 - Line endings are LF (`.gitattributes`, `.editorconfig`); containers run Linux.
 
 ## Conventions
