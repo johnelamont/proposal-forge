@@ -80,10 +80,9 @@ Tabs are the mobile navigation; on desktop they can sit side by side.
 
 - List of past projects: name, tech stack, vertical, complexity, outcome, whether the client may be named (feeds F7's allow-list).
 - **Add project** opens a flow, not a form:
-  1. Choose source: *analyse a project folder* or *enter manually*.
-  2. For a folder: the operator picks it **on their device**; the browser reads only README/docs, dependency manifests and a file tree, and excludes `.env*`, credentials, data files and anything git-ignored — the exclusion list is shown before upload. Nothing else leaves the device. (F5 R5 — the filter runs client-side, before anything is sent.)
+  1. Choose source: *drop files* or *enter manually*.
+  2. For files: a drop zone that accepts one or more documents — in practice a project's `README.md` nine times out of ten, occasionally a dependency manifest or a short design doc. Accepted: Markdown, plain text, and manifest files (`package.json`, `pyproject.toml`, `requirements.txt`, …), with a size cap. Refused with a message: `.env*`, anything that looks like a credential or key file, archives, and data files (`.csv`, `.xlsx`, `.db`, …). The operator chooses exactly which files are sent; nothing is read from their disk beyond what they dropped. (F5 R5)
   3. Claude's extracted summary is shown for confirmation; **Save to work history** is the affirmative step. Failure → nothing saved, error shown.
-- Open question recorded below: how a hosted web app reads a local folder.
 
 ### Portfolio export — `/portfolio` (F7)
 
@@ -107,7 +106,7 @@ Win rate by vertical, budget band and tech stack; proposals per month; abandon r
 ## Mobile and PWA (ADR-002)
 
 - Installable: web manifest, icons, `display: standalone`. iOS needs the "Add to Home Screen" hint once.
-- Offline: service worker caches the shell and the last-loaded pipeline and drafts, **read-only**. Anything that calls Claude, Supabase or Zoho needs a connection and says so instead of queuing silently.
+- Offline operation is **not a requirement** (operator, 2026-10-07). The app assumes a connection; when one is missing it says so. No service-worker caching of app data.
 - Copy on mobile: large tap targets, one **Copy** per section plus **Copy all**; the approval statement is visible without scrolling the icon out of view. Clipboard writes happen inside the tap handler (browser requirement) and the approval row is written in the same handler.
 - Paste on mobile: the textarea is the whole screen; Parse is a sticky bottom button.
 
@@ -124,18 +123,17 @@ Win rate by vertical, budget band and tech stack; proposals per month; abandon r
 | Click Create Lead → `submitted`, Lead in Zoho | Submit tab | F6 |
 | Stage 4: outcome recorded in Zoho, posted back, indexed | Outcome tab; `/settings/review-queue` | F8 |
 | "Next similar proposal: you won 5 of 7 like this" | `/jobs/new` similar-past-work card | F2, F8 |
-| Historical projects: analyse a local project directory | `/history` add-project flow | F5 |
+| Historical projects: drop a README or docs for analysis | `/history` add-project flow | F5 |
 | Analytics: win rate by vertical, budget, tech | `/analytics` | — (no AI) |
 | PDF portfolio export | `/portfolio` | F7 |
-| Mobile-first PWA, install, offline | manifest + service worker; all screens responsive | ADR-002 |
+| Mobile-first PWA, install to home screen | manifest; all screens responsive | ADR-002 |
 | Quick win/loss status checks on mobile | Dashboard pipeline | — |
 | Nothing auto-submitted to Upwork | Submit tab text; no Upwork integration anywhere | Rule 4 |
 | Every AI failure surfaced, never silent | Error + Retry states on every AI card | R8 |
 | AI disclosure at operator's discretion | no app-added disclosure text | Rule 9 |
 
-## Open questions
+## Decisions recorded here (2026-10-07)
 
-1. **F5 — reading a local folder from a hosted web app.** The server (Fly.io) cannot see the operator's disk. Options: the browser's directory picker (`<input webkitdirectory>` works everywhere; the File System Access API gives a nicer flow in Chromium only), with the filtering done in the browser before upload; or a small CLI that runs locally and posts the filtered bundle. Either keeps R5's filter on the device. Needs an ADR before F5 is built.
-2. **Offline scope.** The outline makes offline strictly read-only. If drafting-while-offline matters (ADR-002 mentions "service proposal drafts without internet"), that needs a queued-edit design and a conflict story; proposed: defer, read-only first.
-3. **Stale `submitted` threshold (N days).** A setting with a default (14?). Decide with F8.
-4. **ARCHITECTURE.md "Dual-Mode parsing" section** still says Claude detects the format; F1's design moved format handling to the deterministic parser. Update when the F1 code PR lands.
+- **F5 input is dropped files, not a folder.** The operator drops the files to evaluate (usually a `README.md`). No directory access, no local CLI.
+- **Offline is not a requirement.** Earlier docs listed it as a PWA benefit; it was never a goal.
+- **Stale `submitted` nudge**: a setting, default 14 days. Finalise with F8.

@@ -67,13 +67,13 @@ Upwork exposes no contact details or regulated data in job posts. Sections that 
 | **Approval / audit (R1, R2)** | Covered by F3 — copying the quote is its approval and is logged the same way. The quote is shown alongside the historical pricing evidence it was based on. |
 | **Failure path (R8)** | If no comparable pricing data exists, say so and leave the quote blank for manual entry rather than inventing a number. |
 
-### F5 — Historical project analysis (local directory)
+### F5 — Historical project analysis (dropped files)
 
 | | |
 |---|---|
 | **Classification** | Standard for extraction; output becomes high-stakes when used in F7 |
-| **Source** | A local project directory chosen by the operator. The app does not read GitHub repos directly. |
-| **Data sent to Claude (R5)** | Highest-risk feature for data scope: project folders can contain secrets, `.env` files, and client data. Send only README/docs, dependency manifests, and a file tree. Exclude `.env*`, credentials, data files, and anything git-ignored. Never send a whole directory. |
+| **Source** | Files the operator drops into the UI — in practice a project's `README.md`, sometimes a dependency manifest or a short design doc (decided 2026-10-07; replaces the earlier "local project directory"). The app never reads a folder, a repo, or anything the operator did not explicitly drop. |
+| **Data sent to Claude (R5)** | Exactly the dropped files, after a type and size check. Accepted: Markdown, plain text, dependency manifests. Refused with a visible message: `.env*`, key or credential files, archives, data files (`.csv`, `.xlsx`, `.db`, …). The operator sees the list of files about to be sent before the call. |
 | **Failure path (R8)** | Show extracted summary for user confirmation before saving to `work_history`; failed analysis leaves the project unsaved with an error. |
 | **ToS / legal (R4)** | No external system is accessed. For client projects, check the client contract does not restrict sharing its code or docs with an AI processor before analyzing it. |
 

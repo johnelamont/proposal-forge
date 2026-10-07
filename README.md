@@ -61,13 +61,13 @@ Later: follow up on Upwork, record the result on the Lead in Zoho
 ## Features
 
 - **Dual-parse job posts** — Handles mobile and desktop Upwork copy-paste formats
-- **Historical projects** — Add your past projects (point to a local project directory) → Claude analyzes code/docs → extracts tech stack, complexity, type
+- **Historical projects** — Add your past projects (drop in the README or docs) → Claude extracts tech stack, complexity, type
 - **Real-time advisor** — Compare incoming job to your past projects; show similar outcomes
 - **Analytics** — Win rate by vertical, budget range, tech stack frequency
 - **RAG learning loop** — Each proposal outcome improves future drafts
 - **Zoho integration** — Create a Lead from a submitted proposal; Zoho posts won/lost/withdrawn back to the app for the learning loop. Keyed on Upwork Job ID
 - **PDF portfolio export** — Generate report of wins, verticals, tech stack for attaching to job applications
-- **Mobile-first PWA** — Install on home screen (iOS/Android), offline support
+- **Mobile-first PWA** — Install on home screen (iOS/Android)
 - **Copy-to-clipboard** — Frustration-free paste back to Upwork
 
 ## Getting Started
