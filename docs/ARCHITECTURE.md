@@ -67,20 +67,26 @@
 
 **Trade-off:** Project pauses after 7 days inactivity (free tier). Mitigation: Keep-alive cron job (Vercel function once/week).
 
-### Parsing: Dual-Mode (Mobile vs Desktop)
+### Parsing: Deterministic Sections, Claude for Prose
 
-**Decision:** Support both Upwork mobile and desktop copy formats.
+**Decision:** Support both Upwork mobile and desktop copy formats with a two-layer parser: a deterministic section parser for every labelled field, and Claude for the description text only. Design: [F1_JOB_PARSING.md](F1_JOB_PARSING.md).
 
 **Rationale:**
-- You use both (mobile while browsing, desktop for detail)
-- Different formats → different field order
-- Claude can handle both with format hint
+- You use both (mobile while browsing, desktop for detail); the layouts differ in section order and in which sections exist (mobile has no job link).
+- About 80% of a paste is one-label-per-line structure that regular expressions read exactly and for free; sending it to Claude would cost tokens and invite errors.
+- Upwork's fields and the client's prose can disagree; keeping both layers separate lets the app show the conflict instead of letting one source silently win.
+- Client statistics and history never need to reach a prompt (R5).
 
-**Implementation:**
+**Implementation (outline):**
 ```python
-def parse_upwork_job(raw: str) -> dict:
-    # Claude detects format automatically
-    # Returns standardized {title, budget, scope, ...}
+def parse_job_post(raw: str) -> ParsedJob:
+    sections = split_sections(raw)          # heading lines, any order, all optional
+    parsed = parse_fields(sections)         # engagement, skills, activity, client, job link
+    reading = read_description(             # Claude; None on failure, never a guess
+        title=parsed.title, description=sections.summary,
+        skills=parsed.skills, questions=parsed.questions,
+    )
+    return merge(parsed, reading)           # adds conflicts[], keeps nulls
 ```
 
 ### Workflow: Two-Stage Proposal
@@ -146,7 +152,6 @@ def parse_upwork_job(raw: str) -> dict:
 
 **Rationale:**
 - One codebase (Next.js)
-- Works offline (service worker cache)
 - No App Store submission process
 - Faster iteration
 - Zero cost
@@ -251,7 +256,7 @@ def parse_upwork_job(raw: str) -> dict:
 | Auth | Supabase Auth | Clerk, Auth0 | Tied to Postgres RLS; no vendor cost at free tier |
 | Deployment | Vercel + Fly.io | Railway, Render | Both free tiers; Vercel + Fly is proven combo; lower complexity |
 | Learning | RAG index | Fine-tune GPT | No cost to add proposals; no retraining; versioning easier |
-| Mobile | PWA | React Native | One codebase; no App Store; offline-first; sufficient for use case |
+| Mobile | PWA | React Native | One codebase; no App Store; sufficient for paste/copy/edit |
 
 ## Repository Structure
 
