@@ -49,15 +49,17 @@ export function RecentJobs() {
       {jobs && jobs.length > 0 && (
         <ul className="divide-y divide-neutral-200 rounded border border-neutral-200 text-sm dark:divide-neutral-800 dark:border-neutral-800">
           {jobs.map((j) => (
-            <li
-              key={j.id}
-              className="flex items-center justify-between gap-3 px-3 py-2"
-            >
-              <span className="truncate">{j.title ?? "Untitled"}</span>
-              <span className="shrink-0 text-xs text-neutral-500">
-                {j.decision ?? "undecided"}
-                {j.parse_status !== "ok" && ` · ${j.parse_status}`}
-              </span>
+            <li key={j.id}>
+              <Link
+                href={`/jobs/${j.id}`}
+                className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-900"
+              >
+                <span className="truncate">{j.title ?? "Untitled"}</span>
+                <span className="shrink-0 text-xs text-neutral-500">
+                  {j.decision ?? "undecided"}
+                  {j.parse_status !== "ok" && ` · ${j.parse_status}`}
+                </span>
+              </Link>
             </li>
           ))}
         </ul>
