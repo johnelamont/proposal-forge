@@ -20,14 +20,17 @@ class Settings(BaseSettings):
     # Origins allowed to call this API from a browser (the Next.js frontend).
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
-    # Supabase project this backend verifies user JWTs against. Requests are
-    # made with the caller's JWT so RLS applies; the service-role key is never
-    # used on a user's behalf.
+    # Supabase project this backend talks to. User requests are made with the
+    # caller's JWT (verified with the JWT secret) so RLS applies; the anon key
+    # is the public API key PostgREST expects alongside it. The service-role
+    # key is never used on a user's behalf.
     supabase_url: str = ""
+    supabase_anon_key: str = ""
     supabase_jwt_secret: str = ""
 
-    # Claude API. Unused until F1 (job post parsing) is built.
+    # Claude API. Empty key → the AI layer reports itself as skipped (R8).
     anthropic_api_key: str = ""
+    anthropic_model: str = "claude-opus-5-5"
 
 
 @lru_cache

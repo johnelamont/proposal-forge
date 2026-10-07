@@ -128,14 +128,15 @@ AiReading
 
 ## Storage (outline for the code PR's migration)
 
-One `job_posts` table, owned by the user (`user_id` = `auth.uid()`, RLS on every statement):
+One `job_posts` table, owned by the user (`user_id` = `auth.uid()`, RLS on every statement; no delete policy):
 
 - `raw_paste text` — kept so a job can be re-parsed after a parser fix without a new copy-paste
-- `parsed jsonb` — the deterministic result
-- `ai_reading jsonb null` — the Claude result, `null` on failure
-- `parse_status` — `ok` | `ai_failed` | `unrecognised`
-- `upwork_job_id text null`, unique per user when not null
-- `decision` — `continue` | `abandon` | `null` (unset until clicked), `decided_at`
+- `analysis jsonb` — the whole `JobAnalysis` (`parsed`, `ai` or `null`, `ai_failure`, `conflicts`, `parse_status`), one shape with one validator (`backend/app/models/job.py`)
+- `parse_status` — `ok` | `ai_failed` | `unrecognised`, duplicated as a column for filtering
+- `upwork_job_id text null`, unique per user when not null; duplicated as a column for the uniqueness constraint
+- `decision` — `continue` | `abandon` | `null` (unset until clicked), with `decided_at`; a check constraint keeps the pair consistent
+
+Migration: `supabase/migrations/20261007150000_job_posts.sql`.
 
 Proposals (F3) reference a `job_posts` row. The approval and audit tables belong to F3's migration, not this one.
 
