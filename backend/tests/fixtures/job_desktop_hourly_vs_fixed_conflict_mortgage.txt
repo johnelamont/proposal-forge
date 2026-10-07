@@ -1,0 +1,92 @@
+Looking for Zoho Implementer for CRM
+Posted 32 minutes ago
+Worldwide
+
+Summary
+TITLE
+Zoho CRM developer needed: connect Velocity (mortgage software) to Zoho + renewal tracking
+
+DESCRIPTION
+Hi, we are small mortgage brokerage in BC and Alberta, Canada, with 4 people on the team. We use Zoho One. Our Zoho CRM is already set up with pipelines and RingCentral is connected, so we dont need a full build, just a few specific things done properly.
+
+Our problem: we use Newton Velocity for our mortgage files, and every funded deal gets typed into Zoho by hand. Because of this, maturity dates are often wrong or missing and we are missing renewals.
+
+What we need:
+
+1. Connect Velocity to Zoho. Velocity can send a webhook when a deal is created or its status changes. Each time, Zoho should pull the deal details from the Velocity API and create or update the deal (matched on Loan Code, so no duplicates). When a deal is Funded, it should create a mortgage record with lender, rate, term, maturity date and amount.
+API docs: https://developer.newton.ca/velocity/v1/index.html
+We will give you the API key and a test account.
+
+2. Track renewals properly. Each mortgage can have multiple terms. When a client renews, it should add a new term with the new maturity date, not overwrite the old one.
+
+3. Renewal reminders. When a mortgage is 150 days from maturity, create a deal in our renewal pipeline automatically, with reminder tasks at 120, 90, 60 and 30 days.
+
+4. Import our existing mortgages from a spreadsheet we will provide
+
+5. Short notes and a quick video explaining what you built, so we can maintain it.
+
+Later, if this goes well, we have a few more jobs: commitment letter templates in Zoho Writer + Zoho Sign, text message follow-ups through RingCentral, and a simple dashboard.
+
+About you:
+- You've built Zoho integrations with webhooks and outside APIs using Deluge (please share one example)
+- Some overlap with Pacific time
+- Mortgage or finance experience is a bonus, not required
+- You'll need to sign an NDA because we handle client personal information
+
+Budget: fixed price, paid in 3 milestones:
+1. Setup and data import
+2. Velocity connection working in the test account
+3. Renewal reminders and handover
+
+When you apply, please tell us:
+- Your price and how long it will take
+- A similar integration you have done
+- If Velocity sends the same update twice, how would you make sure we don't get a duplicate deal?
+
+Less than 30 hrs/week
+Hourly
+1 to 3 months
+Duration
+Intermediate
+I am looking for a mix of experience and value
+$9.00
+
+-
+
+$21.00
+
+Hourly
+Contract-to-hire opportunity
+This lets talent know that this job could become full time.
+Learn more
+Project Type: Ongoing project
+Skills and Expertise
+Zoho CRM
+Zoho Creator
+Automation
+Lead Generation
+Email Automation
+Activity on this job
+Proposals:
+15 to 20
+Last viewed by client:
+30 minutes ago
+Interviewing:
+0
+Invites sent:
+3
+Unanswered invites:
+3
+Bid range - High $70.00 Avg $25.04 Low $11.00
+Send a proposal for: 8 Connects
+Available Connects: 36
+About the client
+Payment method not verified
+Phone number verified
+Canada
+8:12 PM
+0% hire rate, 1 open job
+Member since Oct 6, 2026
+Job link
+https://www.upwork.com/jobs/~021000000000000000002
+Copy link

@@ -1,0 +1,119 @@
+AIRTABLE Specialist for Complex Immigration Law Dashboard
+Posted 7 hours ago
+Worldwide
+
+Send a proposal for: 27 Connects
+Available Connects: 36
+Summary
+About Northstar Law Group
+
+Northstar Law Group is a U.S.-based immigration law firm dedicated to providing compassionate and high-quality legal services, especially in family-based and humanitarian immigration. Our diverse, global team thrives on collaboration, adaptability, responsibility, and empathy — the CARE values that guide everything we do.
+
+We rely heavily on data dashboards to manage performance, track caseloads, and make strategic decisions. We’re now looking for a tech-savvy, detail-oriented Spreadsheet Automation Specialist to help us streamline and automate our MS Excel and Google Sheets dashboards — transforming manual reporting into smart, automated systems that empower our team.
+
+What You’ll Do
+
+Audit & Optimize Systems
+
+Review existing Excel, Google Sheets, Airtable, and Smartsheet dashboards for inefficiencies, redundancies, and bottlenecks
+
+Recommend improvements to streamline workflows and ensure accuracy across all platforms
+
+Build & Automate Workflows
+
+Design and optimize automated data pipelines, advanced formulas, conditional logic, and reusable templates
+
+Leverage Airtable automations, Smartsheet workflows, and integrations to reduce manual processes
+
+Create Dynamic Dashboards
+
+Develop user-friendly dashboards with interactive charts, summaries, and drill-down capabilities
+
+Implement role-based or team-based views to enhance usability and decision-making
+
+Implement Error-Proof Systems
+
+Use scripts, macros, and automation logic (e.g., Excel VBA, Google Apps Script, Airtable scripting) to minimize human error
+
+Apply rigorous data validation and error-handling mechanisms across platforms
+
+Integrate Tools & Data Sources
+
+Connect spreadsheets and no-code platforms (Airtable, Smartsheet) with external tools via APIs, Zapier, Make (Integromat), or native connectors
+
+Ensure smooth data flow between CRMs, project management systems, and reporting dashboards
+
+Document & Train
+
+Maintain clear documentation of all automation processes, workflows, and integration logic
+
+Provide training and support so that internal teams can easily adopt and maintain the systems
+
+What We’re Looking For
+
+Proven experience building and automating complex spreadsheets in Excel and Google Sheets
+
+Strong skills in advanced formulas, pivot tables, conditional formatting, and data validation
+
+Hands-on experience with Excel VBA and/or Google Apps Script
+
+Specialization in Airtable, Smartsheet, and other similar workflow automation and collaboration tools
+
+Familiarity with data visualization best practices across multiple platforms
+
+Ability to integrate and optimize workflows between spreadsheets and no-code tools (e.g., Airtable automations, Smartsheet dashboards, Zapier/Make integrations)
+
+Strong attention to detail and problem-solving mindset
+
+Ability to deliver clean, user-friendly dashboards and reports on time
+
+More than 30 hrs/week
+Hourly
+6+ months
+Duration
+Intermediate
+Experience Level
+Project Type: Ongoing project
+You will be asked to answer the following questions when submitting a proposal:
+
+Please include samples of your work as an attachment to your proposal.
+Describe your recent experience with similar projects
+Skills and Expertise
+Dashboard
+Automation
+Airtable
+Data Analytics Framework
+Legal
+Preferred qualifications
+Job Success Score:
+At least 90%
+English level:
+Fluent
+Activity on this job
+Proposals:
+50+
+Last viewed by client:
+6 hours ago
+Interviewing:
+9
+Invites sent:
+17
+Unanswered invites:
+8
+Bid range - High $169.87 Avg $39.17 Low $6.00
+About the client
+Payment method verified
+Rating is 4.9 out of 5.
+4.9
+4.91 of 53 reviews
+United States
+Fort Lauderdale 8:15 PM
+136 jobs posted
+42% hire rate, 1 open job
+$814K total spent
+102 hires, 8 active
+$15.78 /hr avg hourly rate paid
+48,648 hours
+Mid-sized company (10-99 people)
+Member since Dec 6, 2020
+Client's recent history (50)
