@@ -75,9 +75,11 @@ Upwork exposes no contact details or regulated data in job posts. Sections that 
 |---|---|
 | **Classification** | Standard for extraction; output becomes high-stakes when used in F7 |
 | **Source** | Files the operator drops into the UI — in practice a project's `README.md`, sometimes a dependency manifest or a short design doc (decided 2026-10-07; replaces the earlier "local project directory"). The app never reads a folder, a repo, or anything the operator did not explicitly drop. |
-| **Data sent to Claude (R5)** | Exactly the dropped files, after a type and size check. Accepted: Markdown, plain text, dependency manifests. Refused with a visible message: `.env*`, key or credential files, archives, data files (`.csv`, `.xlsx`, `.db`, …). The operator sees the list of files about to be sent before the call. |
-| **Failure path (R8)** | Show extracted summary for user confirmation before saving to `work_history`; failed analysis leaves the project unsaved with an error. |
-| **ToS / legal (R4)** | No external system is accessed. For client projects, check the client contract does not restrict sharing its code or docs with an AI processor before analyzing it. |
+| **Data sent to Claude (R5)** | Exactly the dropped files that pass `backend/app/services/file_rules.py`, verbatim with their names. Accepted: Markdown, plain text, dependency manifests; at most 5 files, 200 KB each. Refused with a visible reason: `.env*`, key, certificate and credential files, archives, data and config files, binaries. **Content is scanned too**: a file containing a private key, an API token, or a non-placeholder `PASSWORD=`/`API_KEY=` assignment is refused outright, whatever its name. The operator sees the accepted and refused lists before anything is sent, and the screen runs again on save. |
+| **Confidence (R3)** | Not an automated operation. Per-field confidence from Claude is display-only; fields under 0.6 carry a marker on the form. |
+| **Client naming** | Claude reports `client_name_detected` when the files name the client. It is never written to `may_name_client`, which defaults to false and is set only by the operator. F2/F3 never send `client_name` to Claude; F7 names a client only when `may_name_client` is true. |
+| **Failure path (R8)** | `extract` never writes. Claude's reading prefills an editable form; **Save to work history** is the affirmative step. Extraction error, empty, malformed or refused → the form opens empty with the error shown and the files still listed; the operator can retry or type the entry in. Nothing is saved on failure. |
+| **ToS / legal (R4)** | No external system is accessed. For client projects, the contract may restrict sharing code or docs with an AI processor; the drop zone shows this reminder, and the decision is the operator's. |
 
 ### F6 — Zoho Lead creation (webhook)
 
