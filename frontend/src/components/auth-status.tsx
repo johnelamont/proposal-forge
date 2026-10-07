@@ -3,6 +3,7 @@
 // can prerender while this part streams (Next.js cacheComponents).
 import { connection } from "next/server";
 
+import { RecentJobs } from "@/components/jobs/recent-jobs";
 import { SignInForm } from "@/components/sign-in-form";
 import { SignOutButton } from "@/components/sign-out-button";
 import { createClient } from "@/lib/supabase/server";
@@ -23,7 +24,8 @@ export async function AuthStatus() {
   }
 
   return (
-    <section className="flex flex-col items-center gap-4">
+    <section className="flex w-full flex-col items-center gap-6">
+      <RecentJobs />
       <p className="text-sm">
         Signed in as <span className="font-medium">{user.email}</span>
       </p>
