@@ -23,10 +23,14 @@ export function JobIntake() {
     setParsing(true);
     try {
       const job = await jobsApi.parse(raw);
+      // The paste has been consumed. Clear it here because the router keeps
+      // this page mounted (hidden) after navigating away, so its state would
+      // otherwise still be here on the next "Paste another".
+      setRaw("");
       router.replace(`/jobs/${job.id}`);
-      // Keep the button disabled until the new page takes over.
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
       setParsing(false);
     }
   }
