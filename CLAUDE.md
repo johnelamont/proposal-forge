@@ -16,7 +16,7 @@ Upwork proposal assistant: parse job posts, draft proposals with the Claude API,
 
 ## Status
 
-Scaffolding (empty, runnable skeleton) merged 2026-10-06. No AI features exist yet; the first is F1 (job post parsing), which starts with its governance register entry, then the first migration.
+Scaffolding merged 2026-10-06. **F1 (job post parsing) complete 2026-10-07**: register entry and design note (#5), backend parser + Claude reader + routes + `job_posts` migration (#8), paste → review → decide screen (#9). Next feature not yet chosen: F3 (proposal drafting) or F5 (work history, which F2 depends on). Whichever is next starts with its register entry, not code.
 
 ## AI governance (mandatory)
 

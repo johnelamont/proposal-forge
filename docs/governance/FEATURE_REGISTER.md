@@ -26,6 +26,8 @@ Upwork exposes no contact details or regulated data in job posts. Sections that 
 
 ### F1 — Job post parsing
 
+*Built 2026-10-07 (PR #8 backend, PR #9 screen). Satisfied in code and tests: `backend/tests/test_job_parser.py` (incl. the R5 boundary), `test_claude_service.py` (all R8 failure paths), `test_jobs_routes.py`, `test_auth.py`.*
+
 | | |
 |---|---|
 | **Classification** | Standard |
