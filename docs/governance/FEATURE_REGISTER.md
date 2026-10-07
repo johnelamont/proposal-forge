@@ -2,7 +2,7 @@
 
 Design-time record required by [AI Governance Rules v1.0](AI_GOVERNANCE_RULES.md) and [ADR-004](../ADRs/ADR-004-ai-governance.md). Every AI-assisted feature needs an entry here before it is built. Update entries as designs change; this is a living document.
 
-**Status of this register:** reviewed by John Lamont (2026-10-04), covering features planned in [ARCHITECTURE.md](../ARCHITECTURE.md). F1, F2 and F6 revised 2026-10-07 after reviewing three real job-post pastes (desktop and mobile; redacted copies in `backend/tests/fixtures/`), which showed that pastes can contain names and that the mobile format omits the job link. Entries marked *Open* have unresolved questions that block the build of that feature.
+**Status of this register:** reviewed by John Lamont (2026-10-04), covering features planned in [ARCHITECTURE.md](../ARCHITECTURE.md). F1, F2 and F6 revised 2026-10-07 after reviewing three real job-post pastes (desktop and mobile; copies in `backend/tests/fixtures/`), which showed how much of a paste is machine-formatted, that Upwork fields and client prose can disagree, and that the mobile format omits the job link. Entries marked *Open* have unresolved questions that block the build of that feature.
 
 ## Project-level determinations
 
@@ -10,7 +10,7 @@ Design-time record required by [AI Governance Rules v1.0](AI_GOVERNANCE_RULES.md
 
 **Determination: does not apply (2026-10-04).** Proposal Forge processes the operator's own Upwork job posts, proposals, and work history. It is not built for or operated on behalf of a client whose environment involves PHI or GDPR special-category data. No BAA is required.
 
-Upwork job posts contain no PHI and no personal data about the operator's clients, but they can include a client's business name in the description and, on desktop, first names in the *Client's recent history* reviews. Those review and history sections are stripped before any AI call (see F1). Re-evaluate if the app is ever offered to other users or used for a healthcare client's data.
+Upwork exposes no contact details or regulated data in job posts. Sections that are irrelevant to drafting a proposal (client statistics, recent history) are excluded from prompts under R5's minimum-necessary principle, not because they contain regulated data (see F1). Re-evaluate if the app is ever offered to other users or used for a healthcare client's data.
 
 ### Rule 4 — Upwork
 
@@ -31,7 +31,7 @@ Upwork job posts contain no PHI and no personal data about the operator's client
 | **Classification** | Standard |
 | **Why** | Extracts fields from text the user pasted; user sees and confirms the result before anything else happens. Nothing leaves the app. Design: [F1_JOB_PARSING.md](../F1_JOB_PARSING.md). |
 | **Approach** | Two layers. A deterministic parser splits the paste into its Upwork sections and reads every labelled field (engagement, rates, skills, activity, connects, client stats, job link) with no AI. Claude reads only the prose. Desktop and mobile pastes differ in section order and content; sections are optional and may appear in any order. |
-| **Data sent to Claude (R5)** | Only: job title, the *Summary* / description text, the skills list, and any Upwork-native screening questions (so Claude does not re-extract them). Never sent: *About the client* (parsed by regex to numbers and flags), *Client's recent history* (dropped entirely, including reviewer and freelancer names), activity and bid statistics, connects. A business name that appears inside the description is sent as part of the description; it is not personal data. |
+| **Data sent to Claude (R5)** | Only what drafting needs: job title, the *Summary* / description text, the skills list, and any Upwork-native screening questions (so Claude does not re-extract them). Not sent, because not needed for the output: *About the client* (parsed by regex to numbers and flags), *Client's recent history* (dropped entirely), activity and bid statistics, connects. |
 | **Confidence (R3)** | Not an automated operation: the operator reviews every parse before continuing. Claude returns a confidence per extracted field; low confidence is shown as such, with the source sentence, and never routes anywhere automatically. |
 | **Failure path (R8)** | Claude error, empty, or malformed JSON → the deterministic fields are still shown, the prose fields are marked "not extracted" with the error, and the operator can retry or enter them manually. Never store a partial parse as if it were complete. Fields absent from the paste are `null`, never guessed (mobile omits the rate range; new clients have no rating or spend). Where Upwork's structured fields and the client's prose disagree (e.g., *Hourly $9–21* vs "fixed price, 3 milestones"), both values are kept and listed under `conflicts`; the parser never picks one. A paste with no job link parses successfully with `upwork_job_id = null` and a visible prompt to paste the link; the ID is required later by F6. |
 | **ToS / legal (R4)** | Manual copy-paste only; the app does not access Upwork (see project-level Rule 4). |
