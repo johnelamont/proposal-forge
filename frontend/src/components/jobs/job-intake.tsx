@@ -1,37 +1,34 @@
 "use client";
 
-// Stage 1 (F1): paste → parse → review. The row is created on Parse with
-// decision = null; the review (JobReview) handles Retry, the job link, and
-// Continue / Abandon, and the same review reopens later at /jobs/[id].
+// Stage 1 (F1): paste → parse, then hand off to /jobs/[id] for the review.
+// The row is created on Parse with decision = null; the review (JobReview)
+// handles Retry, the job link, and Continue / Abandon. Navigating to the
+// job's own URL keeps the address truthful: reload reopens it, and
+// "Paste another" is a real page change.
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { jobsApi } from "@/lib/api";
-import type { JobPost } from "@/lib/types/job";
-
-import { JobReview } from "./job-review";
 
 export function JobIntake() {
+  const router = useRouter();
   const [raw, setRaw] = useState("");
   const [parsing, setParsing] = useState(false);
-  const [job, setJob] = useState<JobPost | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function parse() {
     setError(null);
     setParsing(true);
     try {
-      setJob(await jobsApi.parse(raw));
+      const job = await jobsApi.parse(raw);
+      router.replace(`/jobs/${job.id}`);
+      // Keep the button disabled until the new page takes over.
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
-    } finally {
       setParsing(false);
     }
-  }
-
-  if (job) {
-    return <JobReview initial={job} />;
   }
 
   return (
