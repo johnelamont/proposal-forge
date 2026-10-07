@@ -262,6 +262,7 @@ proposal-forge/
 ├── docs/
 │   ├── ARCHITECTURE.md              (this file)
 │   ├── ZOHO_INTEGRATION.md          field mapping, Deluge contract
+│   ├── F1_JOB_PARSING.md            F1 design: deterministic parser + Claude on prose only
 │   ├── DEPLOYMENT.md                (planned) Vercel + Fly.io + Supabase setup
 │   ├── RAG.md                       (planned) retrieval design and index schema
 │   ├── governance/
