@@ -80,3 +80,52 @@ class UserDb:
                 "order": "created_at.desc",
             },
         )
+
+    # --- work_history ------------------------------------------------------
+
+    def insert_work_history(self, row: dict[str, Any]) -> dict[str, Any]:
+        rows = self._request(
+            "POST",
+            "/work_history",
+            json=row,
+            headers={"Prefer": "return=representation"},
+        )
+        return rows[0]
+
+    def list_work_history(self) -> list[dict[str, Any]]:
+        return self._request(
+            "GET",
+            "/work_history",
+            params={
+                "select": "id,name,vertical,tech_stack,complexity,"
+                "may_name_client,ended,updated_at",
+                "order": "ended.desc.nullslast,updated_at.desc",
+            },
+        )
+
+    def get_work_history(self, entry_id: str) -> dict[str, Any] | None:
+        rows = self._request(
+            "GET", "/work_history", params={"id": f"eq.{entry_id}", "select": "*"}
+        )
+        return rows[0] if rows else None
+
+    def update_work_history(self, entry_id: str, patch: dict[str, Any]) -> dict:
+        rows = self._request(
+            "PATCH",
+            "/work_history",
+            params={"id": f"eq.{entry_id}"},
+            json=patch,
+            headers={"Prefer": "return=representation"},
+        )
+        if not rows:
+            raise DbError(404, "Work history entry not found")
+        return rows[0]
+
+    def delete_work_history(self, entry_id: str) -> bool:
+        rows = self._request(
+            "DELETE",
+            "/work_history",
+            params={"id": f"eq.{entry_id}"},
+            headers={"Prefer": "return=representation"},
+        )
+        return bool(rows)
