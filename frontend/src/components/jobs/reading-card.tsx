@@ -110,10 +110,12 @@ export function ReadingCard({
             confidence={c.budget_statement}
           >
             {ai.budget_statement ? (
-              <p className="text-sm">
-                {ai.budget_statement.model}
-                {ai.budget_statement.amount_raw &&
-                  ` — ${ai.budget_statement.amount_raw}`}
+              <div className="text-sm">
+                <p>
+                  {ai.budget_statement.model}
+                  {ai.budget_statement.amount_raw &&
+                    ` — ${ai.budget_statement.amount_raw}`}
+                </p>
                 {ai.budget_statement.milestones.length > 0 && (
                   <ol className="mt-1 list-decimal pl-5 text-neutral-600 dark:text-neutral-400">
                     {ai.budget_statement.milestones.map((m, i) => (
@@ -121,7 +123,7 @@ export function ReadingCard({
                     ))}
                   </ol>
                 )}
-              </p>
+              </div>
             ) : (
               <p className="text-sm text-neutral-400">Not stated</p>
             )}
