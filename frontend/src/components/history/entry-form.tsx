@@ -93,6 +93,7 @@ export function EntryForm({
   submitLabel,
   busy,
   error,
+  notice,
   onSubmit,
   footer,
 }: {
@@ -101,6 +102,8 @@ export function EntryForm({
   submitLabel: string;
   busy: boolean;
   error: string | null;
+  /** Result of the last submit, shown beside the button where the eye is. */
+  notice?: string | null;
   onSubmit: (values: FormValues) => void;
   footer?: React.ReactNode;
 }) {
@@ -293,6 +296,14 @@ export function EntryForm({
           className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300"
         >
           {error}
+        </p>
+      )}
+      {notice && !error && (
+        <p
+          role="status"
+          className="rounded border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
+        >
+          {notice}
         </p>
       )}
 

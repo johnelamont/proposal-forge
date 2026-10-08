@@ -14,6 +14,10 @@ import type {
 
 import { EntryForm, type FormValues } from "./entry-form";
 
+// Shown at the top on arrival from the add flow; save results show beside
+// the button instead, since on a long form the top is off-screen.
+const ARRIVAL = "Saved to work history.";
+
 const NULLABLE = [
   "vertical",
   "project_type",
@@ -60,7 +64,7 @@ export function EntryEditor({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(
-    justSaved ? "Saved to work history." : null,
+    justSaved ? ARRIVAL : null,
   );
 
   useEffect(() => {
@@ -147,7 +151,7 @@ export function EntryEditor({
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">{entry.name}</h1>
       </header>
-      {notice && (
+      {notice === ARRIVAL && (
         <p
           role="status"
           className="rounded border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
@@ -169,6 +173,7 @@ export function EntryEditor({
         submitLabel="Save changes"
         busy={busy}
         error={error}
+        notice={notice === ARRIVAL ? null : notice}
         onSubmit={(values) => void save(values)}
         footer={
           <button
