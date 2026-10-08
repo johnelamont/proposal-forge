@@ -3,6 +3,14 @@
 // user, so Row Level Security applies.
 import { createClient } from "@/lib/supabase/client";
 import type { Decision, JobPost, JobPostSummary } from "@/lib/types/job";
+import type {
+  DroppedFile,
+  ExtractResponse,
+  WorkHistoryIn,
+  WorkHistoryOut,
+  WorkHistoryPatch,
+  WorkHistorySummary,
+} from "@/lib/types/work-history";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -80,4 +88,27 @@ export const jobsApi = {
       method: "POST",
       body: JSON.stringify({ decision }),
     }),
+};
+
+export const workHistoryApi = {
+  /** Screens the files and asks Claude for a draft. Writes nothing. */
+  extract: (files: DroppedFile[]) =>
+    apiFetch<ExtractResponse>("/api/work-history/extract", {
+      method: "POST",
+      body: JSON.stringify({ files }),
+    }),
+  list: () => apiFetch<WorkHistorySummary[]>("/api/work-history"),
+  get: (id: string) => apiFetch<WorkHistoryOut>(`/api/work-history/${id}`),
+  create: (entry: WorkHistoryIn) =>
+    apiFetch<WorkHistoryOut>("/api/work-history", {
+      method: "POST",
+      body: JSON.stringify(entry),
+    }),
+  update: (id: string, patch: WorkHistoryPatch) =>
+    apiFetch<WorkHistoryOut>(`/api/work-history/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  remove: (id: string) =>
+    apiFetch<void>(`/api/work-history/${id}`, { method: "DELETE" }),
 };
