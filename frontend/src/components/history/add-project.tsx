@@ -76,7 +76,12 @@ export function AddProject() {
           : [],
         ai_extraction: extraction,
       });
-      router.replace(`/history/${entry.id}`);
+      // The router keeps this page mounted (hidden) after navigating away, so
+      // reset it now or the next "Add a project" would show this form again.
+      setPhase({ kind: "choose" });
+      setFiles({ accepted: [], refused: [] });
+      setSaving(false);
+      router.replace(`/history/${entry.id}?saved=1`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
       setSaving(false);

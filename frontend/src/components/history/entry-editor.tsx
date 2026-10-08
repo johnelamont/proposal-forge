@@ -48,12 +48,20 @@ function toPatch(before: WorkHistoryOut, after: FormValues): WorkHistoryPatch {
   return patch;
 }
 
-export function EntryEditor({ id }: { id: string }) {
+export function EntryEditor({
+  id,
+  justSaved = false,
+}: {
+  id: string;
+  justSaved?: boolean;
+}) {
   const router = useRouter();
   const [entry, setEntry] = useState<WorkHistoryOut | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [notice, setNotice] = useState<string | null>(
+    justSaved ? "Saved to work history." : null,
+  );
 
   useEffect(() => {
     workHistoryApi
@@ -74,15 +82,15 @@ export function EntryEditor({ id }: { id: string }) {
     if (!entry) return;
     const patch = toPatch(entry, values);
     setError(null);
-    setSaved(false);
+    setNotice(null);
     if (Object.keys(patch).length === 0) {
-      setSaved(true);
+      setNotice("No changes to save.");
       return;
     }
     setBusy(true);
     try {
       setEntry(await workHistoryApi.update(entry.id, patch));
-      setSaved(true);
+      setNotice("Changes saved.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
@@ -136,14 +144,17 @@ export function EntryEditor({ id }: { id: string }) {
   return (
     <section className="flex flex-col gap-5 pb-8">
       {nav}
-      <header className="flex items-baseline justify-between gap-3">
+      <header>
         <h1 className="text-2xl font-semibold tracking-tight">{entry.name}</h1>
-        {saved && (
-          <span className="text-xs text-green-700 dark:text-green-400">
-            Saved
-          </span>
-        )}
       </header>
+      {notice && (
+        <p
+          role="status"
+          className="rounded border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
+        >
+          {notice}
+        </p>
+      )}
       {entry.source_files.length > 0 && (
         <p className="text-xs text-neutral-500">
           From: {entry.source_files.map((f) => f.name).join(", ")}
