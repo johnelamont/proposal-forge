@@ -1,9 +1,12 @@
-"""Claude layer for F1: read the job description and return structured JSON.
+"""Claude layer: structured extraction with every failure made explicit.
 
-R5: the only text sent is the title, the description, the skills list and any
-Upwork-native screening questions. Client statistics and history never pass
-through here. R8: every failure is returned as an `AiFailure`, never raised
-past this module and never turned into a guess.
+`structured_call` is the one place the Anthropic SDK is invoked. It returns
+either a validated Pydantic model or an `AiFailure` (R8: error, empty,
+malformed, refusal, skipped). Features build small wrappers on it that define
+exactly what text crosses the R5 boundary.
+
+F1's `ClaudeReader` lives here; F5's extractor is in
+`work_history_extractor.py`.
 """
 
 from __future__ import annotations
@@ -12,11 +15,87 @@ import logging
 from typing import Protocol
 
 import anthropic
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from app.models.job import AiFailure, AiReading
 
 log = logging.getLogger(__name__)
+
+
+class _ParseCapable(Protocol):
+    """The slice of the Anthropic client we use; lets tests substitute a fake."""
+
+    class messages:  # noqa: N801 - mirrors the SDK attribute name
+        @staticmethod
+        def parse(**kwargs): ...
+
+
+ClaudeClient = anthropic.Anthropic | _ParseCapable
+
+
+def build_client(api_key: str) -> anthropic.Anthropic | None:
+    """None when no key is configured: callers report `skipped`, not a crash."""
+    return anthropic.Anthropic(api_key=api_key, max_retries=2) if api_key else None
+
+
+def structured_call[T: BaseModel](
+    client: ClaudeClient | None,
+    *,
+    model: str,
+    system: str,
+    user_text: str,
+    schema: type[T],
+    max_tokens: int = 4096,
+    timeout_seconds: float = 60.0,
+) -> T | AiFailure:
+    """One Claude request that must return JSON matching `schema`."""
+    if client is None:
+        return AiFailure(
+            kind="skipped",
+            message="ANTHROPIC_API_KEY is not configured on the server.",
+        )
+    try:
+        response = client.messages.parse(
+            model=model,
+            max_tokens=max_tokens,
+            system=system,
+            messages=[{"role": "user", "content": user_text}],
+            output_format=schema,
+            timeout=timeout_seconds,
+        )
+    except anthropic.RateLimitError:
+        return AiFailure(kind="error", message="Claude rate limit; try again.")
+    except anthropic.APIStatusError as e:
+        log.warning("claude status error %s", e.status_code)
+        return AiFailure(kind="error", message=f"Claude API error ({e.status_code}).")
+    except anthropic.APIConnectionError:
+        return AiFailure(kind="error", message="Could not reach the Claude API.")
+    except (ValidationError, ValueError) as e:
+        # The SDK raises when the model's output is not valid JSON for the
+        # schema. Log the class, not the content.
+        log.warning("claude malformed output: %s", type(e).__name__)
+        return AiFailure(kind="malformed", message="Claude returned malformed data.")
+
+    stop_reason = getattr(response, "stop_reason", None)
+    if stop_reason == "refusal":
+        return AiFailure(kind="refusal", message="Claude declined this request.")
+    if stop_reason == "max_tokens":
+        return AiFailure(kind="malformed", message="Claude's response was cut off.")
+
+    parsed = getattr(response, "parsed_output", None)
+    if parsed is None:
+        return AiFailure(kind="empty", message="Claude returned no data.")
+    if isinstance(parsed, schema):
+        return parsed
+    try:
+        return schema.model_validate(parsed)
+    except ValidationError:
+        return AiFailure(kind="malformed", message="Claude returned malformed data.")
+
+
+# ---------------------------------------------------------------------------
+# F1: read a job description
+# ---------------------------------------------------------------------------
 
 SYSTEM_PROMPT = """\
 You read public Upwork job advertisements that a freelancer has pasted in, \
@@ -49,7 +128,7 @@ financial records, children), with a short reason.
 
 
 class ReadingInput:
-    """Exactly what crosses the R5 boundary. Nothing else is sent."""
+    """Exactly what crosses the R5 boundary for F1. Nothing else is sent."""
 
     def __init__(
         self,
@@ -78,18 +157,10 @@ class ReadingInput:
         return "\n".join(parts)
 
 
-class _ParseCapable(Protocol):
-    """The slice of the Anthropic client we use; lets tests substitute a fake."""
-
-    class messages:  # noqa: N801 - mirrors the SDK attribute name
-        @staticmethod
-        def parse(**kwargs): ...
-
-
 class ClaudeReader:
     def __init__(
         self,
-        client: anthropic.Anthropic | _ParseCapable | None,
+        client: ClaudeClient | None,
         model: str,
         timeout_seconds: float = 60.0,
     ) -> None:
@@ -98,58 +169,17 @@ class ClaudeReader:
         self._timeout = timeout_seconds
 
     def read_description(self, inp: ReadingInput) -> AiReading | AiFailure:
-        if self._client is None:
-            return AiFailure(
-                kind="skipped",
-                message="ANTHROPIC_API_KEY is not configured on the server.",
-            )
         if not inp.description.strip():
             return AiFailure(kind="skipped", message="The paste has no description.")
-
-        try:
-            response = self._client.messages.parse(
-                model=self._model,
-                max_tokens=4096,
-                system=SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": inp.to_prompt()}],
-                output_format=AiReading,
-                timeout=self._timeout,
-            )
-        except anthropic.RateLimitError:
-            return AiFailure(kind="error", message="Claude rate limit; try again.")
-        except anthropic.APIStatusError as e:
-            log.warning("claude status error %s", e.status_code)
-            return AiFailure(
-                kind="error", message=f"Claude API error ({e.status_code})."
-            )
-        except anthropic.APIConnectionError:
-            return AiFailure(kind="error", message="Could not reach the Claude API.")
-        except (ValidationError, ValueError) as e:
-            # The SDK raises when the model's output is not valid JSON for the
-            # schema. Log the class, not the content.
-            log.warning("claude malformed output: %s", type(e).__name__)
-            return AiFailure(
-                kind="malformed", message="Claude returned malformed data."
-            )
-
-        if getattr(response, "stop_reason", None) == "refusal":
-            return AiFailure(kind="refusal", message="Claude declined this request.")
-        if getattr(response, "stop_reason", None) == "max_tokens":
-            return AiFailure(kind="malformed", message="Claude's response was cut off.")
-
-        parsed = getattr(response, "parsed_output", None)
-        if parsed is None:
-            return AiFailure(kind="empty", message="Claude returned no data.")
-        if not isinstance(parsed, AiReading):
-            try:
-                parsed = AiReading.model_validate(parsed)
-            except ValidationError:
-                return AiFailure(
-                    kind="malformed", message="Claude returned malformed data."
-                )
-        return parsed
+        return structured_call(
+            self._client,
+            model=self._model,
+            system=SYSTEM_PROMPT,
+            user_text=inp.to_prompt(),
+            schema=AiReading,
+            timeout_seconds=self._timeout,
+        )
 
 
 def build_reader(api_key: str, model: str) -> ClaudeReader:
-    client = anthropic.Anthropic(api_key=api_key, max_retries=2) if api_key else None
-    return ClaudeReader(client=client, model=model)
+    return ClaudeReader(client=build_client(api_key), model=model)

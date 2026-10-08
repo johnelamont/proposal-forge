@@ -12,8 +12,8 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.core.auth import CurrentUser, current_user
 from app.core.config import Settings, get_settings
+from app.core.deps import Db, get_db
 from app.models.job import JobAnalysis, ParsedJob
 from app.services import job_analysis
 from app.services.claude import ClaudeReader, build_reader
@@ -22,22 +22,16 @@ from app.services.job_parser import RE_JOB_URL
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 
+__all__ = ["get_db", "get_reader", "router"]
+
 
 # --- dependencies -----------------------------------------------------------
-
-
-def get_db(
-    user: Annotated[CurrentUser, Depends(current_user)],
-    settings: Annotated[Settings, Depends(get_settings)],
-) -> UserDb:
-    return UserDb(settings, user.token)
 
 
 def get_reader(settings: Annotated[Settings, Depends(get_settings)]) -> ClaudeReader:
     return build_reader(settings.anthropic_api_key, settings.anthropic_model)
 
 
-Db = Annotated[UserDb, Depends(get_db)]
 Reader = Annotated[ClaudeReader, Depends(get_reader)]
 
 
