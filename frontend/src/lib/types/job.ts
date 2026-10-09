@@ -132,6 +132,59 @@ export interface JobAnalysis {
 
 export type Decision = "continue" | "abandon";
 
+// --- F2 advisory (mirrors backend/app/models/advisory.py) --------------------
+
+export type EvidenceLevel =
+  "none_history" | "none_comparable" | "thin" | "some" | "strong";
+export type Fit = "strong" | "partial" | "weak" | "none";
+
+export interface Comparable {
+  entry_id: string;
+  name: string;
+  score: number;
+  shared_tech: string[];
+  shared_terms: string[];
+  vertical: string | null;
+  project_type: string | null;
+  complexity: "low" | "medium" | "high" | null;
+}
+
+export interface MatchStrength {
+  level: EvidenceLevel;
+  comparable_count: number;
+  history_count: number;
+  label: string;
+}
+
+export interface Citation {
+  entry_id: string;
+  name: string;
+  why: string;
+}
+
+export interface AdvisoryReading {
+  fit: Fit;
+  reasons: string[];
+  gaps: string[];
+  cite: Citation[];
+  angle: string;
+  confidence: {
+    fit: number;
+    reasons: number;
+    gaps: number;
+    cite: number;
+    angle: number;
+  };
+}
+
+export interface Advisory {
+  comparables: Comparable[];
+  match_strength: MatchStrength;
+  reading: AdvisoryReading | null;
+  failure: AiFailure | null;
+  outcomes_note: string;
+}
+
 export interface JobPost {
   id: string;
   analysis: JobAnalysis;
@@ -139,6 +192,8 @@ export interface JobPost {
   decision: Decision | null;
   decided_at: string | null;
   created_at: string;
+  advisory: Advisory | null;
+  advisory_at: string | null;
 }
 
 export interface JobPostSummary {

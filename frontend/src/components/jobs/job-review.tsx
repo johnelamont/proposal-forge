@@ -5,11 +5,12 @@
 // Continue / Abandon bar; decided jobs show the decision and stay readable.
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { jobsApi } from "@/lib/api";
 import type { Decision, JobPost } from "@/lib/types/job";
 
+import { AdvisoryCard } from "./advisory-card";
 import { ClientCard } from "./client-card";
 import { DecideBar } from "./decide-bar";
 import { JobCard } from "./job-card";
@@ -36,6 +37,30 @@ export function JobReview({ initial }: { initial: JobPost }) {
   }
 
   const decide = (d: Decision) => void run(d, () => jobsApi.decide(job.id, d));
+
+  // F2: the advisory has its own busy flag so Continue / Abandon are never
+  // blocked by it (advisory to the operator only). It runs once automatically
+  // the first time a job is reviewed; the backend makes no Claude call when
+  // there is no work history, so that first run is free in that case.
+  const [comparing, setComparing] = useState(false);
+  async function compare() {
+    setComparing(true);
+    try {
+      setJob(await jobsApi.advisory(job.id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setComparing(false);
+    }
+  }
+  const comparedOnce = useRef(false);
+  useEffect(() => {
+    if (job.advisory === null && !comparedOnce.current) {
+      comparedOnce.current = true;
+      void compare();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job.id]);
 
   return (
     <section className={`flex flex-col gap-5 ${decided ? "" : "pb-24"}`}>
@@ -100,6 +125,13 @@ export function JobReview({ initial }: { initial: JobPost }) {
         analysis={a}
         busy={busy === "reread"}
         onRetry={() => void run("reread", () => jobsApi.reread(job.id))}
+      />
+
+      <AdvisoryCard
+        advisory={job.advisory}
+        computedAt={job.advisory_at}
+        busy={comparing}
+        onRefresh={() => void compare()}
       />
 
       <ClientCard client={a.parsed.client} activity={a.parsed.activity} />

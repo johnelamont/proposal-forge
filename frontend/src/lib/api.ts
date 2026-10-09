@@ -88,6 +88,9 @@ export const jobsApi = {
       method: "POST",
       body: JSON.stringify({ decision }),
     }),
+  /** Compute (or refresh) the wheelhouse advisory. Stored on the job. */
+  advisory: (id: string) =>
+    apiFetch<JobPost>(`/api/jobs/${id}/advisory`, { method: "POST" }),
 };
 
 export const workHistoryApi = {
