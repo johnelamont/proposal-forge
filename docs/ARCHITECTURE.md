@@ -270,7 +270,7 @@ proposal-forge/
 │   ├── F1_JOB_PARSING.md            F1 design: deterministic parser + Claude on prose only
 │   ├── F5_WORK_HISTORY.md           F5 design: file gate, extraction, confirm-then-save
 │   ├── F2_WHEELHOUSE.md             F2 design: deterministic comparables + Claude fit verdict
-│   ├── DEPLOYMENT.md                (planned) Vercel + Fly.io + Supabase setup
+│   ├── DEPLOYMENT.md                Vercel + Fly.io + Supabase setup, DNS, data move
 │   ├── RAG.md                       (planned) retrieval design and index schema
 │   ├── governance/
 │   │   ├── AI_GOVERNANCE_RULES.md
@@ -307,13 +307,17 @@ proposal-forge/
 │   ├── uv.lock
 │   ├── .python-version
 │   ├── Dockerfile
-│   └── .env.example                 SUPABASE_URL, SUPABASE_JWT_SECRET, ANTHROPIC_API_KEY, ...
+│   ├── fly.toml                     Fly.io app config (secrets via `fly secrets`)
+│   └── .env.example                 SUPABASE_URL, SUPABASE_ANON_KEY, ANTHROPIC_API_KEY, ...
 ├── supabase/                        Supabase CLI project; local stack via `supabase start`
 │   ├── config.toml
 │   └── migrations/                  versioned SQL; empty until F1 adds the first tables
+├── scripts/
+│   └── migrate_local_to_cloud.py    one-time local → hosted data move
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                   Ruff + pytest; ESLint + Prettier + tsc + next build
+│       ├── ci.yml                   Ruff + pytest; ESLint + Prettier + tsc + next build
+│       └── deploy-backend.yml       Fly.io deploy on push to main (backend/ changes)
 ├── .editorconfig
 ├── .gitattributes                   LF line endings
 ├── .gitignore

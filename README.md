@@ -72,7 +72,7 @@ Later: follow up on Upwork, record the result on the Lead in Zoho
 
 ## Getting Started
 
-Local setup is under [Development](#development). Hosted deployment (Vercel, Fly.io, Supabase) is not set up yet; `docs/DEPLOYMENT.md` will be added with the first deploy.
+Local setup is under [Development](#development). Hosted deployment (Vercel, Fly.io, Supabase, DNS on `techledger.ai`) is in [DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Architecture
 

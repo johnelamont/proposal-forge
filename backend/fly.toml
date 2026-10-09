@@ -1,0 +1,33 @@
+# Fly.io app for the FastAPI backend. Deployed with `fly deploy` from this
+# directory, or by .github/workflows/deploy-backend.yml on push to main.
+# Secrets (ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, CORS_ORIGINS)
+# are set with `fly secrets set`, never here.
+
+app = "upworkforge-api"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ENVIRONMENT = "production"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  # Scale to zero when idle; the first request after a pause takes a few
+  # seconds while the machine starts. Fine for a single operator.
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
