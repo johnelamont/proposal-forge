@@ -66,8 +66,14 @@ def structured_call[T: BaseModel](
     except anthropic.RateLimitError:
         return AiFailure(kind="error", message="Claude rate limit; try again.")
     except anthropic.APIStatusError as e:
-        log.warning("claude status error %s", e.status_code)
-        return AiFailure(kind="error", message=f"Claude API error ({e.status_code}).")
+        # The API's own explanation is not sensitive and is the only way to
+        # tell a bad request from a billing or model problem. Keep it short.
+        detail = (e.message or "").strip().replace("\n", " ")[:300]
+        log.warning("claude status error %s: %s", e.status_code, detail)
+        return AiFailure(
+            kind="error",
+            message=f"Claude API error ({e.status_code}): {detail or 'no detail'}",
+        )
     except anthropic.APIConnectionError:
         return AiFailure(kind="error", message="Could not reach the Claude API.")
     except (ValidationError, ValueError) as e:
