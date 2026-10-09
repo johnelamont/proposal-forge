@@ -16,7 +16,7 @@ Upwork proposal assistant: parse job posts, draft proposals with the Claude API,
 
 ## Status
 
-Scaffolding merged 2026-10-06. **F1 (job post parsing) complete 2026-10-07**: register entry and design note (#5), backend parser + Claude reader + routes + `job_posts` migration (#8), paste → review → decide screen (#9). **F5 (work history) complete 2026-10-08**: file gate, extractor, routes and `work_history` migration (#11), list / add-a-project / edit screens (#12). **F2 (wheelhouse advisory) complete 2026-10-09**: matcher, advisor, advisory route (#14), Similar past work card (#15). **Next: first deploy** (`docs/DEPLOYMENT.md`), then F3 (proposal drafting), which starts with its register entry, not code.
+Scaffolding merged 2026-10-06. **F1 (job post parsing) complete 2026-10-07**: register entry and design note (#5), backend parser + Claude reader + routes + `job_posts` migration (#8), paste → review → decide screen (#9). **F5 (work history) complete 2026-10-08**: file gate, extractor, routes and `work_history` migration (#11), list / add-a-project / edit screens (#12). **F2 (wheelhouse advisory) complete 2026-10-09**: matcher, advisor, advisory route (#14), Similar past work card (#15). **First deploy complete 2026-10-09**: live at `https://upworkforge.techledger.ai` with the API at `https://api.upworkforge.techledger.ai` (#16, #17; `docs/DEPLOYMENT.md`); sign-ups closed, single operator account. **Next: F3 (proposal drafting)**, which starts with its register entry, not code.
 
 ## AI governance (mandatory)
 
