@@ -109,6 +109,8 @@ uv run uvicorn app.main:app --reload # http://127.0.0.1:8000/health, docs at /do
 
 Checks: `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest`.
 
+A process environment variable overrides the same name in `.env` (pydantic-settings). If you have a machine-wide `ANTHROPIC_API_KEY`, the backend uses it even when `.env` differs. Use a workspace-scoped Console key (`sk-ant-api03-…`) in both places.
+
 ### 3. Frontend (Next.js)
 
 ```powershell

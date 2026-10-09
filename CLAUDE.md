@@ -40,7 +40,7 @@ Everything built here follows Lamont Consulting AI Governance Rules v1.0 (`docs/
 ## Conventions
 
 - Work on a branch and open a PR; never commit to `main` directly. PRs are squash-merged after CI passes and the operator says so.
-- Secrets only in `.env` files (git-ignored); commit a `.env.example` with names, never values.
+- Secrets only in `.env` files (git-ignored); commit a `.env.example` with names, never values. Note: pydantic-settings lets a process environment variable override `.env`, and this machine has a user-level `ANTHROPIC_API_KEY` — so the local backend uses *that* key, whatever `.env` says. Keep the two identical, or unset the user-level one, so local and production never run on different keys.
 - Python: Ruff for lint and format. TypeScript: ESLint + Prettier.
 - Local database: apply new migrations with `supabase migration up`, which keeps data. **Never run `supabase db reset` on a stack that holds data the operator wants** -- it rebuilds from scratch. Use `supabase db dump --local --data-only -f backup.sql` first if a reset is unavoidable.
 - Supabase RLS is the tenant boundary: backend calls on behalf of a user must use that user's JWT, not the service-role key.
