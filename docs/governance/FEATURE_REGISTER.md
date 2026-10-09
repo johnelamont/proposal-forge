@@ -44,9 +44,11 @@ Upwork exposes no contact details or regulated data in job posts. Sections that 
 |---|---|
 | **Classification** | Standard |
 | **Why** | Advisory to the operator only; the continue/abandon decision is always a manual click. |
-| **Data sent to Claude (R5)** | Parsed job fields + work history summaries (tech stack, vertical, complexity, outcome). Not: client names, contract amounts beyond budget bands. |
-| **Failure path (R8)** | On error, show "No advisory available" explicitly; continue/abandon still works. |
-| **Confidence (R3)** | Not an automated operation, but show match strength (e.g., number of comparable outcomes) so a thin-evidence advisory is visible as such. |
+| **Approach** | Two layers. A deterministic matcher (`backend/app/services/matcher.py`) scores every work-history entry against the job by shared technology (with a short alias table) and shared vocabulary, keeping the top five with the terms they share. Claude is asked for a fit verdict only when at least one comparable exists. Until F8 records outcomes, the evidence is work history only, and the card says so. |
+| **Data sent to Claude (R5)** | Job: title, description, skills, and F1's one-liner and deliverables. For each comparable work-history entry only: `name, summary, tech_stack, vertical, project_type, complexity, outcomes, budget_band`. Never: `client_name`, `source_files`, `ai_extraction`, dates, client statistics from the paste, or any entry the matcher did not select. |
+| **Confidence (R3)** | Not an automated operation. Match strength is the deterministic count with an honest label — *No work history yet*, *No comparable work history*, *Thin evidence: 1 comparable project*, *N comparable projects* — shown before any verdict. Claude's per-field confidence is display-only. |
+| **When and where** | Computed on demand (`POST /api/jobs/{id}/advisory`) when the review opens and work history exists; stored on the job (`job_posts.advisory`) so reopening costs nothing; **Refresh** recomputes after new history is added. No work history → no call, no cost. |
+| **Failure path (R8)** | No comparables → the card says so; Claude is not called. Claude error, empty, malformed or refused → "No advisory available — reason" with **Retry**; the comparables list still shows; Continue / Abandon are unaffected. Citations naming entries Claude was not shown are dropped. |
 | **Signals shown** | Alongside similar past outcomes, surface the F1 facts an operator weighs before bidding: budget vs. scope, client payment verification and history, F1 `conflicts`, and a *sensitive-data domain* flag when the description indicates the work would handle regulated or special-category data (health, immigration or legal status, finance). The flag is a reminder that the operator's own Rule 6 / Rule 7 engagement checkpoint applies before taking the job; the app makes no determination. |
 
 ### F3 — Proposal drafting (cover letter, Q&A answers)

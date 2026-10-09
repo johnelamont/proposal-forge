@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from app.core.config import Settings, get_settings
 from app.core.deps import Db, get_db
+from app.models.advisory import Advisory
 from app.models.job import JobAnalysis, ParsedJob
 from app.services import job_analysis
 from app.services.claude import ClaudeReader, build_reader
@@ -57,6 +58,8 @@ class JobPostOut(BaseModel):
     decision: Literal["continue", "abandon"] | None
     decided_at: str | None
     created_at: str
+    advisory: Advisory | None = None
+    advisory_at: str | None = None
 
 
 # --- helpers ----------------------------------------------------------------
@@ -70,6 +73,10 @@ def _row_to_out(row: dict[str, Any]) -> JobPostOut:
         decision=row.get("decision"),
         decided_at=row.get("decided_at"),
         created_at=row["created_at"],
+        advisory=(
+            Advisory.model_validate(row["advisory"]) if row.get("advisory") else None
+        ),
+        advisory_at=row.get("advisory_at"),
     )
 
 
