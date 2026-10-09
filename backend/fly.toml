@@ -4,7 +4,7 @@
 # are set with `fly secrets set`, never here.
 
 app = "upworkforge-api"
-primary_region = "den"
+primary_region = "iad"
 
 [build]
   dockerfile = "Dockerfile"

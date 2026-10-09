@@ -25,7 +25,7 @@ Steps marked **(you)** open a browser login and have to be done by the operator;
 ### 2. Fly.io (backend)
 
 1. **(you)** `scoop install flyctl`, create an account, `fly auth login`.
-2. From `backend/`: `fly launch --no-deploy --copy-config --name upworkforge-api --region <nearest>` (accepts the committed `fly.toml`; say no to a Postgres database — Supabase is the database).
+2. From `backend/`: `fly launch --no-deploy --copy-config --name upworkforge-api --region iad` (accepts the committed `fly.toml`; say no to a Postgres database — Supabase is the database).
 3. Secrets (never in files):
    ```powershell
    fly secrets set ANTHROPIC_API_KEY=sk-ant-... SUPABASE_URL=https://<ref>.supabase.co SUPABASE_ANON_KEY=<anon key> CORS_ORIGINS='["https://upworkforge.techledger.ai"]' ANTHROPIC_MODEL=claude-opus-5-5
