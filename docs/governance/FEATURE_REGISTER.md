@@ -71,6 +71,8 @@ Upwork exposes no contact details or regulated data in job posts. Sections that 
 
 ### F5 — Historical project analysis (dropped files)
 
+*Built 2026-10-08 (PR #11 backend, PR #12 screens). Satisfied in code and tests: `backend/tests/test_file_rules.py` (every accept and refuse rule), `test_work_history_extractor.py` (R5 prompt boundary, R8 failure paths), `test_work_history_routes.py` (extract never writes; save re-screens).*
+
 | | |
 |---|---|
 | **Classification** | Standard for extraction; output becomes high-stakes when used in F7 |
