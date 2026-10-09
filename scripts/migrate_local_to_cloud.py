@@ -8,7 +8,7 @@ this). Auth internals are not copied; only your data is.
 Usage (PowerShell or Git Bash, from the repo root, local stack running):
 
     uv run --directory backend python ../scripts/migrate_local_to_cloud.py \
-        --cloud-url "postgresql://postgres.<ref>:<password>@<pooler-host>:5432/postgres" \
+        --cloud-url "<session pooler connection string>" \
         --cloud-user-id <uuid of your account in the hosted project>
 
 The cloud URL is the *Session pooler* connection string from the Supabase

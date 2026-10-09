@@ -22,9 +22,14 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
     steps:
       - uses: actions/checkout@v5
+      - name: Skip until FLY_API_TOKEN is configured
+        if: env.FLY_API_TOKEN == ''
+        run: echo "FLY_API_TOKEN not set; skipping deploy (see docs/DEPLOYMENT.md)"
       - uses: superfly/flyctl-actions/setup-flyctl@master
+        if: env.FLY_API_TOKEN != ''
       - run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        if: env.FLY_API_TOKEN != ''
