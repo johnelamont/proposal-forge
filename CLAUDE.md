@@ -16,7 +16,7 @@ Upwork proposal assistant: parse job posts, draft proposals with the Claude API,
 
 ## Status
 
-Scaffolding merged 2026-10-06. **F1 (job post parsing) complete 2026-10-07**: register entry and design note (#5), backend parser + Claude reader + routes + `job_posts` migration (#8), paste → review → decide screen (#9). **F5 (work history) complete 2026-10-08**: file gate, extractor, routes and `work_history` migration (#11), list / add-a-project / edit screens (#12). Next: F2 (wheelhouse advisory, now that work history exists) or F3 (proposal drafting). Whichever is next starts with its register entry, not code.
+Scaffolding merged 2026-10-06. **F1 (job post parsing) complete 2026-10-07**: register entry and design note (#5), backend parser + Claude reader + routes + `job_posts` migration (#8), paste → review → decide screen (#9). **F5 (work history) complete 2026-10-08**: file gate, extractor, routes and `work_history` migration (#11), list / add-a-project / edit screens (#12). **F2 (wheelhouse advisory) complete 2026-10-09**: matcher, advisor, advisory route (#14), Similar past work card (#15). **Next: first deploy** (`docs/DEPLOYMENT.md`), then F3 (proposal drafting), which starts with its register entry, not code.
 
 ## AI governance (mandatory)
 
@@ -34,7 +34,7 @@ Everything built here follows Lamont Consulting AI Governance Rules v1.0 (`docs/
 - Windows 11, VS Code, PowerShell + Git Bash. Give Windows-correct commands (no `source venv/bin/activate`).
 - Repo lives at `C:\dev\proposal-forge`, outside OneDrive. It is used from two machines and GitHub is the only sync: commit and push before switching machines, pull on arrival. Don't move it back into OneDrive (synced `.venv` / `node_modules` / `.next` cause conflicts).
 - Tooling installed: Node 24 LTS, uv, Docker Desktop, Supabase CLI (via Scoop), GitHub CLI (authenticated), Vercel CLI, Scoop.
-- Before first deploy (not needed for local development): create a Supabase account and hosted project, then `supabase link`; `vercel login`; install `flyctl` and `fly auth login`.
+- Hosted: frontend `https://upworkforge.techledger.ai` (Vercel), backend `https://api.upworkforge.techledger.ai` (Fly.io app `upworkforge-api`), database on Supabase hosted. Setup and day-to-day commands in `docs/DEPLOYMENT.md`. The hosted stack is where real data lives; local stacks are test beds.
 - Line endings are LF (`.gitattributes`, `.editorconfig`); containers run Linux.
 
 ## Conventions

@@ -5,6 +5,12 @@ import { useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
+// The deployed URL is public and every account can spend Claude credits, so
+// sign-up is switched off after the operator's account exists (Supabase's own
+// setting closes the API; this only hides the button). Allowed by default
+// for local development.
+const ALLOW_SIGNUP = process.env.NEXT_PUBLIC_ALLOW_SIGNUP !== "false";
+
 export function SignInForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -78,14 +84,16 @@ export function SignInForm() {
         >
           Sign in
         </button>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void submit("signUp")}
-          className="rounded border border-neutral-300 px-4 py-2 text-sm font-medium disabled:opacity-50 dark:border-neutral-700"
-        >
-          Create account
-        </button>
+        {ALLOW_SIGNUP && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void submit("signUp")}
+            className="rounded border border-neutral-300 px-4 py-2 text-sm font-medium disabled:opacity-50 dark:border-neutral-700"
+          >
+            Create account
+          </button>
+        )}
       </div>
     </form>
   );
