@@ -8,6 +8,8 @@ import { useState } from "react";
 
 import { PROJECT_TYPES, ROLES, VERTICALS } from "@/lib/options";
 import { LOW_CONFIDENCE } from "@/lib/types/job";
+
+import { PickOrType } from "./pick-or-type";
 import type {
   Complexity,
   Extraction,
@@ -177,36 +179,28 @@ export function EntryForm({
         <Field
           label="Vertical / industry"
           confidence={c?.vertical}
-          hint="Pick one or type your own."
+          hint="Choose Other… to type your own."
         >
-          <input
-            list="vertical-options"
+          <PickOrType
             value={v.vertical ?? ""}
-            onChange={(e) => set("vertical", e.target.value)}
+            options={VERTICALS}
+            onChange={(next) => set("vertical", next)}
             className={INPUT}
+            placeholder="e.g. Dental practices"
           />
-          <datalist id="vertical-options">
-            {VERTICALS.map((o) => (
-              <option key={o} value={o} />
-            ))}
-          </datalist>
         </Field>
         <Field
           label="Project type"
           confidence={c?.project_type}
-          hint="Pick one or type your own."
+          hint="Choose Other… to type your own."
         >
-          <input
-            list="project-type-options"
+          <PickOrType
             value={v.project_type ?? ""}
-            onChange={(e) => set("project_type", e.target.value)}
+            options={PROJECT_TYPES}
+            onChange={(next) => set("project_type", next)}
             className={INPUT}
+            placeholder="e.g. Renewal tracking automation"
           />
-          <datalist id="project-type-options">
-            {PROJECT_TYPES.map((o) => (
-              <option key={o} value={o} />
-            ))}
-          </datalist>
         </Field>
         <Field
           label="Complexity"
@@ -229,19 +223,15 @@ export function EntryForm({
         <Field
           label="Your role"
           confidence={c?.role}
-          hint="Pick one or type your own, e.g. “Consultant, developer”."
+          hint="Choose Other… for a combination, e.g. “Consultant, developer”."
         >
-          <input
-            list="role-options"
+          <PickOrType
             value={v.role ?? ""}
-            onChange={(e) => set("role", e.target.value)}
+            options={ROLES}
+            onChange={(next) => set("role", next)}
             className={INPUT}
+            placeholder="e.g. Consultant, developer"
           />
-          <datalist id="role-options">
-            {ROLES.map((o) => (
-              <option key={o} value={o} />
-            ))}
-          </datalist>
         </Field>
       </div>
 

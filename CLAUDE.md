@@ -42,5 +42,6 @@ Everything built here follows Lamont Consulting AI Governance Rules v1.0 (`docs/
 - Work on a branch and open a PR; never commit to `main` directly. PRs are squash-merged after CI passes and the operator says so.
 - Secrets only in `.env` files (git-ignored); commit a `.env.example` with names, never values.
 - Python: Ruff for lint and format. TypeScript: ESLint + Prettier.
+- Local database: apply new migrations with `supabase migration up`, which keeps data. **Never run `supabase db reset` on a stack that holds data the operator wants** -- it rebuilds from scratch. Use `supabase db dump --local --data-only -f backup.sql` first if a reset is unavoidable.
 - Supabase RLS is the tenant boundary: backend calls on behalf of a user must use that user's JWT, not the service-role key.
 - Claude API calls live in backend services, never in the frontend.

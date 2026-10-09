@@ -96,7 +96,7 @@ supabase status    # prints them again later
 supabase stop      # when done
 ```
 
-Studio (database UI): <http://127.0.0.1:54323>. Schema changes are SQL files in `supabase/migrations/`, applied on `supabase start` or with `supabase db reset`.
+Studio (database UI): <http://127.0.0.1:54323>. Schema changes are SQL files in `supabase/migrations/`. After pulling new ones, apply them with `supabase migration up` -- this keeps your data. `supabase db reset` rebuilds the database from scratch and **deletes local data**; only use it on an empty stack (take `supabase db dump --local --data-only -f backup.sql` first if not).
 
 ### 2. Backend (FastAPI)
 
