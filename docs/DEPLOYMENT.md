@@ -19,7 +19,7 @@ Steps marked **(you)** open a browser login and have to be done by the operator;
 1. **(you)** Create an account at supabase.com and a project (region: the one nearest you; it cannot be changed later). Choose a strong database password and keep it — it is needed for the data move.
 2. **(you)** `supabase login` (opens a browser), then from the repo root: `supabase link --project-ref <ref>`.
 3. `supabase db push` — applies every migration in `supabase/migrations/` to the hosted database. Repeat after each merged migration (it only applies new ones).
-4. **(you)** In the dashboard, Authentication → Providers → Email: leave *Confirm email* on. Authentication → URL Configuration: Site URL `https://upworkforge.techledger.ai`, and add it to Redirect URLs.
+4. **(you)** In the dashboard, Authentication → URL Configuration: Site URL `https://upworkforge.techledger.ai`; Redirect URLs `https://upworkforge.techledger.ai/**` and `https://upworkforge.vercel.app/**`. Authentication → Providers → Email: *Confirm email* **off** — Supabase's built-in mailer allows only a few auth emails per hour (the first attempt hit "email rate limit exceeded"), and with sign-ups closed right after the operator's account exists, confirmation protects nothing.
 5. Note from Project Settings → API: the project URL and the **anon / publishable key**; from Project Settings → Database: the *Session pooler* connection string.
 
 ### 2. Fly.io (backend)
@@ -47,11 +47,11 @@ Steps marked **(you)** open a browser login and have to be done by the operator;
 | CNAME | `upworkforge` | `cname.vercel-dns.com` |
 | CNAME | `api.upworkforge` | `upworkforge-api.fly.dev` |
 
-Certificates are issued automatically by both hosts once the records resolve (minutes to an hour).
+Certificates are issued automatically by both hosts once the records resolve (minutes to an hour). **On Cloudflare the records must be DNS only (grey cloud), not proxied**: behind Cloudflare's proxy Fly cannot validate its certificate and TLS is terminated twice.
 
 ### 5. Your account, then close the door
 
-1. Open `https://upworkforge.techledger.ai`, **Create account** with your email, confirm the email Supabase sends, sign in.
+1. Open `https://upworkforge.techledger.ai`, **Create account** with your email and sign in (no confirmation email with *Confirm email* off).
 2. **Turn sign-ups off** — the URL is public and every account can spend Claude credits:
    - Vercel: set `NEXT_PUBLIC_ALLOW_SIGNUP=false` and redeploy (hides the button).
    - Supabase dashboard: Authentication → Providers → Email → *Allow new users to sign up* off (closes the API too).
@@ -69,7 +69,7 @@ Drop `--dry-run` to run it. It copies `work_history` and `job_posts` rows, rewri
 
 ## Day to day
 
-- Merge to `main` → Vercel redeploys the frontend; the Fly workflow redeploys the backend when `backend/` changed.
+- Merge to `main` → Vercel redeploys the frontend (Git connection confirmed working 2026-10-09); the Fly workflow redeploys the backend when `backend/` changed (`FLY_API_TOKEN` is set).
 - New migration merged → `supabase db push` from the repo root (additive; never resets).
 - Secrets change → `fly secrets set …` (backend) or Vercel env settings + redeploy (frontend).
 - Supabase free projects pause after a week without traffic; signing in wakes them. If that becomes a nuisance, a weekly ping of the API URL from a Vercel cron is the fix noted in ARCHITECTURE.md.
