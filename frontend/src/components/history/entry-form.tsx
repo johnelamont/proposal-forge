@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 
+import { PROJECT_TYPES, ROLES, VERTICALS } from "@/lib/options";
 import { LOW_CONFIDENCE } from "@/lib/types/job";
 import type {
   Complexity,
@@ -119,9 +120,16 @@ export function EntryForm({
       className="flex flex-col gap-4"
       onSubmit={(e) => {
         e.preventDefault();
+        // Text is kept verbatim while typing (trimming on each keystroke
+        // made spaces impossible); normalise once, here.
         onSubmit({
           ...v,
           name: v.name.trim(),
+          vertical: orNull(v.vertical ?? ""),
+          project_type: orNull(v.project_type ?? ""),
+          role: orNull(v.role ?? ""),
+          budget_band: orNull(v.budget_band ?? ""),
+          client_name: orNull(v.client_name ?? ""),
           tech_stack: techText
             .split(/[,\n]/)
             .map((s) => s.trim())
@@ -166,19 +174,39 @@ export function EntryForm({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Vertical / industry" confidence={c?.vertical}>
+        <Field
+          label="Vertical / industry"
+          confidence={c?.vertical}
+          hint="Pick one or type your own."
+        >
           <input
+            list="vertical-options"
             value={v.vertical ?? ""}
-            onChange={(e) => set("vertical", orNull(e.target.value))}
+            onChange={(e) => set("vertical", e.target.value)}
             className={INPUT}
           />
+          <datalist id="vertical-options">
+            {VERTICALS.map((o) => (
+              <option key={o} value={o} />
+            ))}
+          </datalist>
         </Field>
-        <Field label="Project type" confidence={c?.project_type}>
+        <Field
+          label="Project type"
+          confidence={c?.project_type}
+          hint="Pick one or type your own."
+        >
           <input
+            list="project-type-options"
             value={v.project_type ?? ""}
-            onChange={(e) => set("project_type", orNull(e.target.value))}
+            onChange={(e) => set("project_type", e.target.value)}
             className={INPUT}
           />
+          <datalist id="project-type-options">
+            {PROJECT_TYPES.map((o) => (
+              <option key={o} value={o} />
+            ))}
+          </datalist>
         </Field>
         <Field
           label="Complexity"
@@ -198,12 +226,22 @@ export function EntryForm({
             <option value="high">High</option>
           </select>
         </Field>
-        <Field label="Your role" confidence={c?.role}>
+        <Field
+          label="Your role"
+          confidence={c?.role}
+          hint="Pick one or type your own, e.g. “Consultant, developer”."
+        >
           <input
+            list="role-options"
             value={v.role ?? ""}
-            onChange={(e) => set("role", orNull(e.target.value))}
+            onChange={(e) => set("role", e.target.value)}
             className={INPUT}
           />
+          <datalist id="role-options">
+            {ROLES.map((o) => (
+              <option key={o} value={o} />
+            ))}
+          </datalist>
         </Field>
       </div>
 
@@ -224,7 +262,7 @@ export function EntryForm({
         <Field label="Budget band" hint="e.g. $1–5K, $5–10K">
           <input
             value={v.budget_band ?? ""}
-            onChange={(e) => set("budget_band", orNull(e.target.value))}
+            onChange={(e) => set("budget_band", e.target.value)}
             className={INPUT}
           />
         </Field>
@@ -268,7 +306,7 @@ export function EntryForm({
           >
             <input
               value={v.client_name ?? ""}
-              onChange={(e) => set("client_name", orNull(e.target.value))}
+              onChange={(e) => set("client_name", e.target.value)}
               className={INPUT}
             />
           </Field>
