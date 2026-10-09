@@ -103,6 +103,18 @@ class UserDb:
             },
         )
 
+    def list_work_history_for_matching(self) -> list[dict[str, Any]]:
+        """The fields F2 may compare and send to Claude. No client names,
+        no source files, no extraction provenance."""
+        return self._request(
+            "GET",
+            "/work_history",
+            params={
+                "select": "id,name,summary,tech_stack,vertical,project_type,"
+                "complexity,outcomes,budget_band",
+            },
+        )
+
     def get_work_history(self, entry_id: str) -> dict[str, Any] | None:
         rows = self._request(
             "GET", "/work_history", params={"id": f"eq.{entry_id}", "select": "*"}
