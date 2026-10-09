@@ -6,7 +6,7 @@ Three hosted pieces, all on free tiers, plus DNS on `techledger.ai`:
 |---|---|---|---|
 | Frontend (Next.js) | Vercel | `https://upworkforge.techledger.ai` | Vercel's GitHub integration on push to `main` |
 | Backend (FastAPI) | Fly.io, app `upworkforge-api` | `https://api.upworkforge.techledger.ai` | `.github/workflows/deploy-backend.yml` on push to `main` touching `backend/`, or `fly deploy` from `backend/` |
-| Database + auth | Supabase hosted project | `https://<ref>.supabase.co` (never typed by a person) | `supabase db push` from the repo root |
+| Database + auth | Supabase hosted project `gmlxibzldwomwclzxbhc` (us-east-1) | `https://gmlxibzldwomwclzxbhc.supabase.co` (never typed by a person) | `supabase db push` from the repo root |
 
 Local development is unchanged ([README → Development](../README.md#development)); the local stack is a test bed, the hosted stack is where real data lives.
 
@@ -30,14 +30,14 @@ Steps marked **(you)** open a browser login and have to be done by the operator;
    ```powershell
    fly secrets set ANTHROPIC_API_KEY=sk-ant-... SUPABASE_URL=https://<ref>.supabase.co SUPABASE_ANON_KEY=<anon key> CORS_ORIGINS='["https://upworkforge.techledger.ai"]' ANTHROPIC_MODEL=claude-opus-5-5
    ```
-4. `fly deploy` → check `https://upworkforge-api.fly.dev/health`.
-5. Custom name: `fly certs add api.upworkforge.techledger.ai`, then the DNS record below. `fly certs check api.upworkforge.techledger.ai` until it reports issued.
+4. `fly deploy --ha=false` → check `https://upworkforge-api.fly.dev/health`. (Without `--ha=false` Fly creates two machines for high availability; `fly scale count 1` trims it back. One is plenty for a single operator.)
+5. Custom name: `fly certs add api.upworkforge.techledger.ai`, then the DNS record below (the CNAME works; Fly's suggested A/AAAA records are an alternative). `fly certs check api.upworkforge.techledger.ai` until it reports issued.
 6. For automatic deploys: `fly tokens create deploy -x 999999h` and add it as the GitHub repository secret `FLY_API_TOKEN`.
 
 ### 3. Vercel (frontend)
 
-1. **(you)** `vercel login`, then in the Vercel dashboard *Add New Project* → import `johnelamont/proposal-forge` → **Root Directory `frontend`** (everything else is detected).
-2. Environment variables (Production): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_URL=https://api.upworkforge.techledger.ai`, `NEXT_PUBLIC_ALLOW_SIGNUP=true` (for the first sign-up only — see step 5).
+1. **(you)** `vercel login`. The project `upworkforge` was created from the CLI (`vercel link --project upworkforge` inside `frontend/`); the first deploys were `vercel deploy --prod` from that folder. For automatic deploys on push, in the dashboard: Settings → General → **Root Directory `frontend`**, then Settings → Git → connect `johnelamont/proposal-forge`. Note: `vercel link` appends `.vercel` and `.env*` to `frontend/.gitignore` and a `VERCEL_OIDC_TOKEN` line to `.env.local`; remove them (the `.env*` line would re-hide `.env.example`).
+2. Environment variables (Production): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_URL=https://api.upworkforge.techledger.ai`, `NEXT_PUBLIC_ALLOW_SIGNUP=true` (for the first sign-up only — see step 5). From a terminal: `vercel env add NAME production --value "…" --no-sensitive` — the flags matter, the CLI otherwise waits on prompts and silently stores nothing. `NEXT_PUBLIC_*` values are baked in at build time, so changing one needs a redeploy (`vercel deploy --prod`).
 3. Deploy. Then Settings → Domains → add `upworkforge.techledger.ai`; Vercel shows the record to create.
 
 ### 4. DNS on `techledger.ai`
