@@ -115,6 +115,120 @@ class UserDb:
             },
         )
 
+    def get_work_history_many(self, ids: list[str]) -> list[dict[str, Any]]:
+        if not ids:
+            return []
+        return self._request(
+            "GET",
+            "/work_history",
+            params={
+                "id": "in.(" + ",".join(ids) + ")",
+                "select": "id,name,summary,tech_stack,vertical,project_type,"
+                "complexity,outcomes,budget_band",
+            },
+        )
+
+    # --- profiles ----------------------------------------------------------
+
+    def get_profile(self) -> dict[str, Any] | None:
+        rows = self._request("GET", "/profiles", params={"select": "*"})
+        return rows[0] if rows else None
+
+    def upsert_profile(self, row: dict[str, Any]) -> dict[str, Any]:
+        rows = self._request(
+            "POST",
+            "/profiles",
+            params={"on_conflict": "user_id"},
+            json=row,
+            headers={"Prefer": "return=representation,resolution=merge-duplicates"},
+        )
+        return rows[0]
+
+    # --- proposals -----------------------------------------------------------
+
+    def insert_proposal(self, row: dict[str, Any]) -> dict[str, Any]:
+        rows = self._request(
+            "POST",
+            "/proposals",
+            json=row,
+            headers={"Prefer": "return=representation"},
+        )
+        return rows[0]
+
+    def get_proposal(self, proposal_id: str) -> dict[str, Any] | None:
+        rows = self._request(
+            "GET", "/proposals", params={"id": f"eq.{proposal_id}", "select": "*"}
+        )
+        return rows[0] if rows else None
+
+    def get_proposal_by_job(self, job_post_id: str) -> dict[str, Any] | None:
+        rows = self._request(
+            "GET",
+            "/proposals",
+            params={"job_post_id": f"eq.{job_post_id}", "select": "*"},
+        )
+        return rows[0] if rows else None
+
+    def update_proposal(self, proposal_id: str, patch: dict[str, Any]) -> dict:
+        rows = self._request(
+            "PATCH",
+            "/proposals",
+            params={"id": f"eq.{proposal_id}"},
+            json=patch,
+            headers={"Prefer": "return=representation"},
+        )
+        if not rows:
+            raise DbError(404, "Proposal not found")
+        return rows[0]
+
+    def list_versions(self, proposal_id: str) -> list[dict[str, Any]]:
+        return self._request(
+            "GET",
+            "/draft_versions",
+            params={
+                "proposal_id": f"eq.{proposal_id}",
+                "select": "*",
+                "order": "version.asc",
+            },
+        )
+
+    def get_version(self, version_id: str) -> dict[str, Any] | None:
+        rows = self._request(
+            "GET",
+            "/draft_versions",
+            params={"id": f"eq.{version_id}", "select": "*"},
+        )
+        return rows[0] if rows else None
+
+    def insert_version(self, row: dict[str, Any]) -> dict[str, Any]:
+        rows = self._request(
+            "POST",
+            "/draft_versions",
+            json=row,
+            headers={"Prefer": "return=representation"},
+        )
+        return rows[0]
+
+    def list_approvals(self, proposal_id: str) -> list[dict[str, Any]]:
+        return self._request(
+            "GET",
+            "/proposal_approvals",
+            params={
+                "proposal_id": f"eq.{proposal_id}",
+                "select": "*",
+                "order": "approved_at.desc",
+            },
+        )
+
+    def insert_approval(self, row: dict[str, Any]) -> dict[str, Any]:
+        rows = self._request(
+            "POST",
+            "/proposal_approvals",
+            json=row,
+            headers={"Prefer": "return=representation"},
+        )
+        return rows[0]
+
     def get_work_history(self, entry_id: str) -> dict[str, Any] | None:
         rows = self._request(
             "GET", "/work_history", params={"id": f"eq.{entry_id}", "select": "*"}
