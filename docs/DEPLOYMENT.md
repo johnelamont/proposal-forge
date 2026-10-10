@@ -26,7 +26,7 @@ Steps marked **(you)** open a browser login and have to be done by the operator;
 
 1. **(you)** `scoop install flyctl`, create an account, `fly auth login`.
 2. From `backend/`: `fly launch --no-deploy --copy-config --name upworkforge-api --region iad` (accepts the committed `fly.toml`; say no to a Postgres database — Supabase is the database).
-3. Secrets (never in files):
+3. Secrets (never in files). `ANTHROPIC_API_KEY` must be a **workspace-scoped** Console key (`sk-ant-api03-…`); an organisation-scoped key (`sk-ant-usr-…`) is rejected with a 400 asking for an `anthropic-workspace-id` header. A dedicated workspace for the app keeps its spend on its own line.
    ```powershell
    fly secrets set ANTHROPIC_API_KEY=sk-ant-... SUPABASE_URL=https://<ref>.supabase.co SUPABASE_ANON_KEY=<anon key> CORS_ORIGINS='["https://upworkforge.techledger.ai"]' ANTHROPIC_MODEL=claude-opus-5-5
    ```
