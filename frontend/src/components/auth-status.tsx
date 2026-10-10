@@ -31,6 +31,9 @@ export async function AuthStatus() {
         <Link href="/history" className="underline">
           Work history
         </Link>
+        <Link href="/profile" className="underline">
+          Profile
+        </Link>
       </nav>
       <p className="text-sm">
         Signed in as <span className="font-medium">{user.email}</span>

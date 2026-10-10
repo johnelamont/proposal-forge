@@ -5,9 +5,10 @@
 // Continue / Abandon bar; decided jobs show the decision and stay readable.
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { jobsApi } from "@/lib/api";
+import { ApiError, jobsApi, proposalsApi } from "@/lib/api";
 import type { Decision, JobPost } from "@/lib/types/job";
 
 import { AdvisoryCard } from "./advisory-card";
@@ -37,6 +38,32 @@ export function JobReview({ initial }: { initial: JobPost }) {
   }
 
   const decide = (d: Decision) => void run(d, () => jobsApi.decide(job.id, d));
+
+  // F3: open (or create, drafting version 1) the proposal for this job.
+  const router = useRouter();
+  const [opening, setOpening] = useState(false);
+  const [profileNeeded, setProfileNeeded] = useState(false);
+  async function openProposal() {
+    setError(null);
+    setProfileNeeded(false);
+    setOpening(true);
+    try {
+      const existing = await proposalsApi.forJob(job.id);
+      const out = existing ?? (await proposalsApi.create(job.id));
+      router.push(`/proposals/${out.proposal.id}`);
+    } catch (e) {
+      if (
+        e instanceof ApiError &&
+        e.status === 409 &&
+        /profile/i.test(e.message)
+      ) {
+        setProfileNeeded(true);
+      } else {
+        setError(e instanceof Error ? e.message : "Something went wrong.");
+      }
+      setOpening(false);
+    }
+  }
 
   // F2: the advisory has its own busy flag so Continue / Abandon are never
   // blocked by it (advisory to the operator only). It runs once automatically
@@ -96,9 +123,35 @@ export function JobReview({ initial }: { initial: JobPost }) {
           <br />
           <span className="text-neutral-600 dark:text-neutral-400">
             {job.decision === "continue"
-              ? "Drafting (Stage 2) is the next feature; this job is saved and will be waiting there."
+              ? "Next: draft the proposal. Claude writes a first version from this review, your profile and your past work; you edit and copy what you approve."
               : "Recorded for your analytics. Nothing else happens with this job."}
           </span>
+          {job.decision === "continue" && (
+            <span className="mt-3 block">
+              <button
+                type="button"
+                disabled={opening}
+                onClick={() => void openProposal()}
+                className="rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
+              >
+                {opening ? "Drafting… (20–40 s)" : "Draft proposal"}
+              </button>
+            </span>
+          )}
+        </p>
+      )}
+
+      {profileNeeded && (
+        <p
+          role="alert"
+          className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
+        >
+          Drafting needs your profile first (your name and a positioning
+          paragraph).{" "}
+          <Link href="/profile" className="underline">
+            Set up your profile
+          </Link>
+          , then come back here.
         </p>
       )}
 

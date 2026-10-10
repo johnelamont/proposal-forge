@@ -4,6 +4,13 @@
 import { createClient } from "@/lib/supabase/client";
 import type { Decision, JobPost, JobPostSummary } from "@/lib/types/job";
 import type {
+  CopyText,
+  Profile,
+  ProfileIn,
+  ProposalOut,
+  SectionName,
+} from "@/lib/types/proposal";
+import type {
   DroppedFile,
   ExtractResponse,
   WorkHistoryIn,
@@ -91,6 +98,83 @@ export const jobsApi = {
   /** Compute (or refresh) the wheelhouse advisory. Stored on the job. */
   advisory: (id: string) =>
     apiFetch<JobPost>(`/api/jobs/${id}/advisory`, { method: "POST" }),
+};
+
+export const profileApi = {
+  get: () => apiFetch<Profile | null>("/api/profile"),
+  put: (profile: ProfileIn) =>
+    apiFetch<Profile>("/api/profile", {
+      method: "PUT",
+      body: JSON.stringify(profile),
+    }),
+};
+
+export const proposalsApi = {
+  /** Creates the proposal for a job (or returns the existing one) with draft v1. */
+  create: (job_post_id: string, form_paste?: string) =>
+    apiFetch<ProposalOut>("/api/proposals", {
+      method: "POST",
+      body: JSON.stringify({ job_post_id, form_paste: form_paste ?? null }),
+    }),
+  get: (id: string) => apiFetch<ProposalOut>(`/api/proposals/${id}`),
+  forJob: (jobId: string) =>
+    apiFetch<ProposalOut | null>(`/api/proposals/by-job/${jobId}`),
+  redraft: (id: string) =>
+    apiFetch<ProposalOut>(`/api/proposals/${id}/draft`, { method: "POST" }),
+  addQuestions: (id: string, form_paste: string) =>
+    apiFetch<ProposalOut>(`/api/proposals/${id}/questions`, {
+      method: "POST",
+      body: JSON.stringify({ form_paste }),
+    }),
+  refine: (
+    id: string,
+    section: "cover_letter" | "answer",
+    index: number | null,
+    instruction: string,
+  ) =>
+    apiFetch<ProposalOut>(`/api/proposals/${id}/refine`, {
+      method: "POST",
+      body: JSON.stringify({ section, index, instruction }),
+    }),
+  edit: (
+    id: string,
+    section: "cover_letter" | "answer" | "quote",
+    index: number | null,
+    content: string,
+    quote_amount?: string | null,
+  ) =>
+    apiFetch<ProposalOut>(`/api/proposals/${id}/edit`, {
+      method: "POST",
+      body: JSON.stringify({ section, index, content, quote_amount }),
+    }),
+  /** The exact text (and its hash) for a section of a version. */
+  copyText: (
+    id: string,
+    versionId: string,
+    section: SectionName,
+    index: number | null,
+  ) => {
+    const q = new URLSearchParams({ section, version_id: versionId });
+    if (index !== null) q.set("index", String(index));
+    return apiFetch<CopyText>(`/api/proposals/${id}/copy-text?${q}`);
+  },
+  /** Records a copy as approval; the server checks the hash. */
+  approve: (
+    id: string,
+    versionId: string,
+    section: SectionName,
+    index: number | null,
+    content_hash: string,
+  ) =>
+    apiFetch<unknown>(`/api/proposals/${id}/approvals`, {
+      method: "POST",
+      body: JSON.stringify({
+        draft_version_id: versionId,
+        section,
+        section_index: index,
+        content_hash,
+      }),
+    }),
 };
 
 export const workHistoryApi = {
