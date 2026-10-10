@@ -69,7 +69,7 @@ Drop `--dry-run` to run it. It copies `work_history` and `job_posts` rows, rewri
 
 ## Day to day
 
-- Merge to `main` → Vercel redeploys the frontend (Git connection confirmed working 2026-10-09); the Fly workflow redeploys the backend when `backend/` changed (`FLY_API_TOKEN` is set).
+- Merge to `main` → the Fly workflow redeploys the backend when `backend/` changed (`FLY_API_TOKEN` is set). The frontend does **not** yet redeploy on merge: the Vercel project has no Git connection (the Vercel account was created with email, so GitHub must be added as a *Login Connection* in Vercel account settings before a repo can be connected) and its Root Directory is `.`. Until both are fixed, deploy with `vercel deploy --prod` from `frontend/` on `main`. To fix: Vercel → Account Settings → Authentication → connect GitHub; Project → Settings → General → Root Directory `frontend`; Project → Settings → Git → connect `johnelamont/proposal-forge`.
 - New migration merged → `supabase db push` from the repo root (additive; never resets).
 - Secrets change → `fly secrets set …` (backend) or Vercel env settings + redeploy (frontend).
 - Supabase free projects pause after a week without traffic; signing in wakes them. If that becomes a nuisance, a weekly ping of the API URL from a Vercel cron is the fix noted in ARCHITECTURE.md.

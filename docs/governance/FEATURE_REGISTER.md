@@ -53,6 +53,8 @@ Upwork exposes no contact details or regulated data in job posts. Sections that 
 
 ### F3 — Proposal drafting (cover letter, Q&A answers)
 
+*Built 2026-10-10 (PR #21 backend, PR #22 workspace). Satisfied in code and tests: `backend/tests/test_drafter.py` (frame, never-claim flags, R5 boundary, alignment, failure paths), `test_proposals_routes.py` (versions append, refine failure keeps previous, copy-text/approval hash accept and reject), migration `20261009200000_proposals.sql` (append-only triggers verified live).*
+
 | | |
 |---|---|
 | **Classification** | **High-stakes** |
@@ -64,6 +66,8 @@ Upwork exposes no contact details or regulated data in job posts. Sections that 
 | **Failure path (R8)** | Drafting: error, empty, or truncated output → stored as a version whose sections are empty and whose `ai_meta.failure` says why; nothing is shown as complete; the operator can retry or write manually. Section-level refine failures write no version (502 with the reason) and leave the previous version current. Fewer answers than questions → blanks plus a warning. Drafting refuses until the profile has a name and positioning. Audit: the clipboard write happens immediately (browsers require it inside the click), and the approval row is written in the same handler; if that write fails, show a visible "approval not logged — retry" banner and keep retrying. Never fail silently. |
 
 ### F4 — Price quote
+
+*Built 2026-10-10 with F3 (PR #21, #22). Satisfied in code and tests: `backend/tests/test_pricing.py` (within range, above range flagged, no rate, fixed from bands, no evidence → blank, conflict carried).*
 
 | | |
 |---|---|
