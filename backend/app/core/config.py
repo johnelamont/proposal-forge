@@ -32,6 +32,26 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-opus-5-5"
 
+    # Zoho CRM (F6). Server-based OAuth client; each user connects their own
+    # account. Refresh tokens are stored AES-GCM encrypted with
+    # token_encryption_key (32 random bytes, base64), never in configuration.
+    zoho_client_id: str = ""
+    zoho_client_secret: str = ""
+    zoho_accounts_url: str = "https://accounts.zoho.com"
+    zoho_api_url: str = "https://www.zohoapis.com"
+    zoho_redirect_uri: str = "http://127.0.0.1:8000/api/integrations/zoho/callback"
+    zoho_leads_layout_id: str = ""
+    token_encryption_key: str = ""
+    frontend_url: str = "http://localhost:3000"
+
+    @property
+    def zoho_configured(self) -> bool:
+        return bool(
+            self.zoho_client_id
+            and self.zoho_client_secret
+            and self.token_encryption_key
+        )
+
 
 @lru_cache
 def get_settings() -> Settings:
