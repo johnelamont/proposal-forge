@@ -5,7 +5,7 @@
 // and Create Lead — the affirmative action, logged on every press.
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { zohoApi } from "@/lib/api";
 import type {
@@ -68,6 +68,17 @@ export function SubmitPanel({
     by_invitation: false,
   });
   const [open, setOpen] = useState(false);
+  // The confirm form lives up in the Categorised box; the checklist at the
+  // bottom opens it and scrolls there, so the action sits on the line that
+  // asks for it.
+  const categorisedRef = useRef<HTMLDivElement | null>(null);
+  function openConfirm() {
+    setOpen(true);
+    categorisedRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
 
   function load(p: LeadPreview) {
     setPreview(p);
@@ -179,7 +190,10 @@ export function SubmitPanel({
       {preview && (
         <>
           {/* AI-derived fields */}
-          <div className="rounded border border-neutral-200 p-3 text-sm dark:border-neutral-800">
+          <div
+            ref={categorisedRef}
+            className="scroll-mt-4 rounded border border-neutral-200 p-3 text-sm dark:border-neutral-800"
+          >
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="font-medium">
                 Categorised by Claude
@@ -407,6 +421,34 @@ export function SubmitPanel({
                   }
                 >
                   {c.ok ? "✓" : "○"} {c.label}
+                  {!c.ok && (c.key === "flags" || c.key === "industry") && (
+                    <>
+                      {" — "}
+                      <button
+                        type="button"
+                        onClick={openConfirm}
+                        className="underline"
+                      >
+                        {c.key === "flags"
+                          ? "review and confirm the flagged values"
+                          : "set it"}
+                      </button>
+                    </>
+                  )}
+                  {!c.ok && c.key === "connected" && (
+                    <>
+                      {" — "}
+                      <Link href="/settings/zoho" className="underline">
+                        connect in Settings
+                      </Link>
+                    </>
+                  )}
+                  {!c.ok && c.key === "approved" && (
+                    <span className="text-neutral-500">
+                      {" "}
+                      — copy a section above first
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

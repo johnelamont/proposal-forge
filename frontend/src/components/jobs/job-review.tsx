@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { ApiError, jobsApi, proposalsApi } from "@/lib/api";
 import type { Decision, JobPost } from "@/lib/types/job";
+import type { ProposalOut } from "@/lib/types/proposal";
 
 import { AdvisoryCard } from "./advisory-card";
 import { ClientCard } from "./client-card";
@@ -39,17 +40,39 @@ export function JobReview({ initial }: { initial: JobPost }) {
 
   const decide = (d: Decision) => void run(d, () => jobsApi.decide(job.id, d));
 
-  // F3: open (or create, drafting version 1) the proposal for this job.
+  // F3: the proposal for this job. A continued job may already have one
+  // (drafted, edited, copied); reopening the job must show that, not a
+  // "Draft proposal" button that reads as starting over. undefined = not
+  // checked yet, null = none.
   const router = useRouter();
+  const [existing, setExisting] = useState<ProposalOut | null | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    if (job.decision !== "continue") return;
+    let cancelled = false;
+    proposalsApi
+      .forJob(job.id)
+      .then((p) => {
+        if (!cancelled) setExisting(p);
+      })
+      .catch(() => {
+        if (!cancelled) setExisting(null); // the button still works
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [job.id, job.decision]);
+
   const [opening, setOpening] = useState(false);
   const [profileNeeded, setProfileNeeded] = useState(false);
-  async function openProposal() {
+  async function draftProposal() {
     setError(null);
     setProfileNeeded(false);
     setOpening(true);
     try {
-      const existing = await proposalsApi.forJob(job.id);
       const out = existing ?? (await proposalsApi.create(job.id));
+      setExisting(out);
       router.push(`/proposals/${out.proposal.id}`);
     } catch (e) {
       if (
@@ -61,6 +84,9 @@ export function JobReview({ initial }: { initial: JobPost }) {
       } else {
         setError(e instanceof Error ? e.message : "Something went wrong.");
       }
+    } finally {
+      // Also after a successful push: this component may stay mounted
+      // behind the new route, and must not come back stuck on "Drafting".
       setOpening(false);
     }
   }
@@ -122,20 +148,35 @@ export function JobReview({ initial }: { initial: JobPost }) {
           )}
           <br />
           <span className="text-neutral-600 dark:text-neutral-400">
-            {job.decision === "continue"
-              ? "Next: draft the proposal. Claude writes a first version from this review, your profile and your past work; you edit and copy what you approve."
-              : "Recorded for your analytics. Nothing else happens with this job."}
+            {job.decision !== "continue"
+              ? "Recorded for your analytics. Nothing else happens with this job."
+              : existing
+                ? `Proposal ${existing.proposal.status} · ${existing.versions.length} version${existing.versions.length === 1 ? "" : "s"} · ${existing.approvals.length} cop${existing.approvals.length === 1 ? "y" : "ies"} logged.`
+                : "Next: draft the proposal. Claude writes a first version from this review, your profile and your past work; you edit and copy what you approve."}
           </span>
           {job.decision === "continue" && (
             <span className="mt-3 block">
-              <button
-                type="button"
-                disabled={opening}
-                onClick={() => void openProposal()}
-                className="rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-              >
-                {opening ? "Drafting… (20–40 s)" : "Draft proposal"}
-              </button>
+              {existing ? (
+                <Link
+                  href={`/proposals/${existing.proposal.id}`}
+                  className="inline-block rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white dark:bg-neutral-100 dark:text-neutral-900"
+                >
+                  Open proposal
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled={opening || existing === undefined}
+                  onClick={() => void draftProposal()}
+                  className="rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
+                >
+                  {opening
+                    ? "Drafting… (20–40 s)"
+                    : existing === undefined
+                      ? "Checking…"
+                      : "Draft proposal"}
+                </button>
+              )}
             </span>
           )}
         </p>
