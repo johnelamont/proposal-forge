@@ -14,6 +14,7 @@ import type { ProposalOut } from "@/lib/types/proposal";
 import { CopyButton } from "./copy-button";
 import { QuoteCard } from "./quote-card";
 import { SectionCard } from "./section-card";
+import { SubmitPanel } from "./submit-panel";
 import { VersionsList } from "./versions-list";
 
 export function ProposalWorkspace({ id }: { id: string }) {
@@ -303,6 +304,10 @@ export function ProposalWorkspace({ id }: { id: string }) {
           </p>
         )}
       </section>
+
+      {approvals.length > 0 && (
+        <SubmitPanel proposalId={id} onSubmitted={refresh} />
+      )}
 
       <VersionsList
         versions={versions}
