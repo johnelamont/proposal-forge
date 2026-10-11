@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-from app.routes import advisory, health, jobs, proposals, work_history
+from app.routes import advisory, health, jobs, proposals, work_history, zoho
 
 
 def create_app() -> FastAPI:
@@ -22,6 +22,7 @@ def create_app() -> FastAPI:
     app.include_router(advisory.router)
     app.include_router(work_history.router)
     app.include_router(proposals.router)
+    app.include_router(zoho.router)
     return app
 
 

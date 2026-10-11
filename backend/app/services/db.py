@@ -128,6 +128,65 @@ class UserDb:
             },
         )
 
+    # --- zoho (F6) -----------------------------------------------------------
+
+    def get_zoho_connection(self) -> dict[str, Any] | None:
+        rows = self._request("GET", "/zoho_connections", params={"select": "*"})
+        return rows[0] if rows else None
+
+    def upsert_zoho_connection(self, row: dict[str, Any]) -> dict[str, Any]:
+        rows = self._request(
+            "POST",
+            "/zoho_connections",
+            params={"on_conflict": "user_id"},
+            json=row,
+            headers={"Prefer": "return=representation,resolution=merge-duplicates"},
+        )
+        return rows[0]
+
+    def touch_zoho_connection(self) -> None:
+        self._request(
+            "PATCH",
+            "/zoho_connections",
+            params={"user_id": "not.is.null"},
+            json={"last_used_at": "now()"},
+        )
+
+    def delete_zoho_connection(self) -> None:
+        self._request("DELETE", "/zoho_connections", params={"user_id": "not.is.null"})
+
+    def insert_oauth_state(self, nonce: str) -> None:
+        self._request("POST", "/zoho_oauth_states", json={"nonce": nonce})
+
+    def get_oauth_state(self, nonce: str) -> dict[str, Any] | None:
+        rows = self._request(
+            "GET", "/zoho_oauth_states", params={"nonce": f"eq.{nonce}", "select": "*"}
+        )
+        return rows[0] if rows else None
+
+    def delete_oauth_state(self, nonce: str) -> None:
+        self._request("DELETE", "/zoho_oauth_states", params={"nonce": f"eq.{nonce}"})
+
+    def insert_lead_attempt(self, row: dict[str, Any]) -> dict[str, Any]:
+        rows = self._request(
+            "POST",
+            "/lead_attempts",
+            json=row,
+            headers={"Prefer": "return=representation"},
+        )
+        return rows[0]
+
+    def list_lead_attempts(self, proposal_id: str) -> list[dict[str, Any]]:
+        return self._request(
+            "GET",
+            "/lead_attempts",
+            params={
+                "proposal_id": f"eq.{proposal_id}",
+                "select": "*",
+                "order": "attempted_at.desc",
+            },
+        )
+
     # --- profiles ----------------------------------------------------------
 
     def get_profile(self) -> dict[str, Any] | None:
