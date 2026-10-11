@@ -6,11 +6,11 @@ Field names below are Zoho API names from the operator's Leads module metadata (
 
 ## Zoho-side setup
 
-1. **Make `Upwork_Job_ID` unique.** The field exists (text, 255) but currently allows duplicates. Upsert needs it unique to match on it.
+1. **Make `Upwork_Job_ID` unique** (done 2026-10-11). Upsert matches on it.
    - First, check for existing duplicate values.
    - Then enable *Do not allow duplicate values* on the field.
 2. **Find the Upwork layout ID.** Lead creation must specify it, so Zoho applies that layout's required fields and picklist values.
-3. **Register an API client** for Lead creation. In the Zoho API Console, create a *server-based application* with the backend's OAuth callback as the redirect URI. Scopes:
+3. **Register an API client** for Lead creation (done 2026-10-10). In the Zoho API Console, a *server-based application* with both redirect URIs — `http://127.0.0.1:8000/api/integrations/zoho/callback` for local development and `https://api.upworkforge.techledger.ai/api/integrations/zoho/callback` for production. Its client ID and secret are backend configuration (`ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`); each user then connects their own Zoho account from Settings, and their refresh token is stored encrypted ([F6_ZOHO_LEAD.md](F6_ZOHO_LEAD.md)). Scopes:
    - `ZohoCRM.modules.leads.CREATE`
    - `ZohoCRM.modules.leads.UPDATE`
 4. **Store the integration secret.** Generate it in Proposal Forge settings, then store it in Zoho as a Connection (preferred) or org variable. Never paste it into function code.
@@ -29,7 +29,7 @@ Field names below are Zoho API names from the operator's Leads module metadata (
 | `Lead_Source` | picklist, **layout-required** | `"Upwork"` | Constant |
 | `Lead_Status` | picklist, **layout-required** | `"New Lead"` | Constant |
 | `Upwork_Job_ID` | text(255), unique | Upwork job ID | Parsed from job URL, or entered by user |
-| `Industry` | picklist (values in use on the layout) | Client's industry | **AI-derived** (note 1); required by the app |
+| `Industry` | picklist (values below) | Client's industry | **AI-derived** (note 1); required by the app |
 | `Job_Name` | text(255) | Job title | Parsed |
 | `Job_Link` | url, unique | Job URL | Parsed or pasted |
 | `Proposal_Link` | url, unique | Proposal URL | Pasted after submission |
@@ -43,13 +43,51 @@ Field names below are Zoho API names from the operator's Leads module metadata (
 | `Client_s_Desired_Experience_Level` | picklist: Expert / Intermediate / Beginner | From job post | Parsed |
 | `Deliverables` | textarea | Deliverables from job post | Parsed |
 | `By_Invitation` | boolean | Whether the job came by invite | User toggle |
-| `Job_Type` | picklist (Zoho CRM, Zoho One, CRM + Creator, …, Other) | Job category | **AI-derived** (note 1) |
+| `Job_Type` | picklist (values below) | Job category | **AI-derived** (note 1) |
 | `Tools` | text(255) | Tech stack | **AI-derived** (note 1) |
 
 Notes:
 
-1. **AI-derived fields (Rule 3).** `Industry` and `Job_Type` are constrained to the picklist values in use on the Upwork layout. Each AI-derived field carries a confidence value. Below threshold, the field is flagged in the pre-send preview and must be confirmed or edited. Thresholds are set and recorded in [feature register F6](governance/FEATURE_REGISTER.md).
+1. **AI-derived fields (Rule 3).** `Industry` and `Job_Type` are constrained to the picklists below. Each AI-derived field carries a confidence value; below its threshold (`Industry` 0.7, `Job_Type` 0.7, `Tools` 0.6, recorded in [feature register F6](governance/FEATURE_REGISTER.md) and `backend/app/config/picklists.json`) the field is flagged in the pre-send preview and must be confirmed or edited. A value not on the picklist is always flagged.
 2. **Length limits.** Values longer than a field's limit (e.g., `Skills_Required` at 255) are shown truncated in the preview before sending, never silently cut.
+
+### Picklists (confirmed 2026-10-11)
+
+The operator replaced the six-year-old values with one vocabulary shared with Work history. The canonical copy is `backend/app/config/picklists.json` (mirrored in `frontend/src/lib/picklists.json`); Zoho must match it. When deleting old values in Zoho, use its *replace* option so existing Leads keep a value.
+
+- `Industry`:
+  - Finance & Accounting
+  - Mortgage / Lending
+  - Insurance
+  - Real Estate
+  - Legal
+  - Healthcare
+  - Professional Services
+  - Marketing / Agency
+  - E-commerce / Retail
+  - Manufacturing
+  - Construction / Trades
+  - Logistics / Transport
+  - Education
+  - Non-profit
+  - Software / SaaS
+  - Hospitality / Travel
+  - Government
+  - Other
+- `Job_Type`:
+  - Zoho CRM setup / configuration
+  - Zoho One rollout
+  - Zoho Creator app
+  - CRM integration
+  - API / AI integration
+  - Automation / workflow
+  - Data migration / import
+  - Dashboard / reporting (Zoho Analytics)
+  - Zoho Books / finance
+  - Business analysis / consulting
+  - Training / documentation
+  - Support / maintenance
+  - Other
 
 ### Required before **Create Lead**
 

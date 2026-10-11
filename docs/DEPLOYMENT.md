@@ -29,6 +29,9 @@ Steps marked **(you)** open a browser login and have to be done by the operator;
 3. Secrets (never in files). `ANTHROPIC_API_KEY` must be a **workspace-scoped** Console key (`sk-ant-api03-…`); an organisation-scoped key (`sk-ant-usr-…`) is rejected with a 400 asking for an `anthropic-workspace-id` header. A dedicated workspace for the app keeps its spend on its own line.
    ```powershell
    fly secrets set ANTHROPIC_API_KEY=sk-ant-... SUPABASE_URL=https://<ref>.supabase.co SUPABASE_ANON_KEY=<anon key> CORS_ORIGINS='["https://upworkforge.techledger.ai"]' ANTHROPIC_MODEL=claude-opus-5-5
+   # F6 (Zoho): the ZOHO_* values from backend/.env with the production redirect URI, a production-only
+   # TOKEN_ENCRYPTION_KEY (never reuse the local one), and FRONTEND_URL=https://upworkforge.techledger.ai
+   fly secrets set ZOHO_CLIENT_ID=... ZOHO_CLIENT_SECRET=... ZOHO_ACCOUNTS_URL=https://accounts.zoho.com ZOHO_API_URL=https://www.zohoapis.com ZOHO_REDIRECT_URI=https://api.upworkforge.techledger.ai/api/integrations/zoho/callback ZOHO_LEADS_LAYOUT_ID=... TOKEN_ENCRYPTION_KEY=... FRONTEND_URL=https://upworkforge.techledger.ai
    ```
 4. `fly deploy --ha=false` → check `https://upworkforge-api.fly.dev/health`. (Without `--ha=false` Fly creates two machines for high availability; `fly scale count 1` trims it back. One is plenty for a single operator.)
 5. Custom name: `fly certs add api.upworkforge.techledger.ai`, then the DNS record below (the CNAME works; Fly's suggested A/AAAA records are an alternative). `fly certs check api.upworkforge.techledger.ai` until it reports issued.
