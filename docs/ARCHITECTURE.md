@@ -271,6 +271,7 @@ proposal-forge/
 │   ├── F5_WORK_HISTORY.md           F5 design: file gate, extraction, confirm-then-save
 │   ├── F2_WHEELHOUSE.md             F2 design: deterministic comparables + Claude fit verdict
 │   ├── F3_DRAFTING.md               F3/F4 design: hard rules, versions, copy-as-approval, quote evidence
+│   ├── F6_ZOHO_LEAD.md              F6 design: per-user OAuth, Lead preview with thresholds, append-only attempts
 │   ├── DEPLOYMENT.md                Vercel + Fly.io + Supabase setup, DNS, data move
 │   ├── RAG.md                       (planned) retrieval design and index schema
 │   ├── governance/

@@ -1,0 +1,44 @@
+{
+  "_comment": "One vocabulary for Work history (F5), the advisory (F2) and Zoho Leads (F6). Confirmed by the operator 2026-10-11. frontend/src/lib/picklists.json must be identical (tests/test_picklists.py checks). Change Zoho's picklists to match before changing this file.",
+  "industry": [
+    "Finance & Accounting",
+    "Mortgage / Lending",
+    "Insurance",
+    "Real Estate",
+    "Legal",
+    "Healthcare",
+    "Professional Services",
+    "Marketing / Agency",
+    "E-commerce / Retail",
+    "Manufacturing",
+    "Construction / Trades",
+    "Logistics / Transport",
+    "Education",
+    "Non-profit",
+    "Software / SaaS",
+    "Hospitality / Travel",
+    "Government",
+    "Other"
+  ],
+  "job_type": [
+    "Zoho CRM setup / configuration",
+    "Zoho One rollout",
+    "Zoho Creator app",
+    "CRM integration",
+    "API / AI integration",
+    "Automation / workflow",
+    "Data migration / import",
+    "Dashboard / reporting (Zoho Analytics)",
+    "Zoho Books / finance",
+    "Business analysis / consulting",
+    "Training / documentation",
+    "Support / maintenance",
+    "Other"
+  ],
+  "thresholds": {
+    "_comment": "F6 Rule 3: below these, the AI-derived field is flagged and must be confirmed before Create Lead. A value not on the picklist is always flagged.",
+    "Industry": 0.7,
+    "Job_Type": 0.7,
+    "Tools": 0.6
+  }
+}
