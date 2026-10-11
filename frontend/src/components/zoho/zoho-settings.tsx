@@ -100,10 +100,8 @@ export function ZohoSettings() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Zoho CRM</h1>
         <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-          Lets <strong>Create Lead</strong> write to your Zoho CRM. You approve
-          two permissions on Zoho&apos;s own page — create and update Leads; the
-          app never reads your CRM — and the token is stored encrypted against
-          your account. Your Zoho password never passes through this app.
+          We need to connect you to Zoho CRM to create and update Leads; the app
+          never reads. The token is encrypted and stored against your account.
         </p>
       </header>
 
@@ -186,7 +184,7 @@ export function ZohoSettings() {
                   disabled={busy}
                   className="rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
                 >
-                  {busy ? "Connecting…" : "Connect Zoho"}
+                  {busy ? "Connecting…" : "Connect to Zoho"}
                 </button>
               </div>
             </div>
