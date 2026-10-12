@@ -81,6 +81,8 @@ def test_client_named_only_when_permitted_and_money_never_present():
     )
     assert named.entries[0].client_line == "for Northwind Mortgage"
     assert warnings == []
+    own, _ = build_manifest(PROFILE, [entry(client_name=None)], [], sel(), TODAY)
+    assert own.entries[0].client_line is None  # no client → no "for a ... client"
     assert named.entries[0].period == "Mar 2025 – Jun 2025"
 
 
