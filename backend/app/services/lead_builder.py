@@ -71,15 +71,18 @@ def build_payload(
     fields: LeadFields | None,
     classification: Classification | None,
     on: date,
+    *,
+    has_lead: bool = False,
 ) -> tuple[dict[str, Any], list[str]]:
     job = analysis.parsed
     e = job.engagement
     truncations: list[str] = []
-    payload: dict[str, Any] = {
-        "Last_Name": "TBD",
-        "Lead_Source": "Upwork",
-        "Lead_Status": "Submitted Proposal",
-    }
+    payload: dict[str, Any] = {"Last_Name": "TBD", "Lead_Source": "Upwork"}
+    # Lead_Status is set only when creating the Lead. On an update (a Lead ID
+    # is known) it is omitted so a status the operator set in Zoho — the F8
+    # outcomes — is never reset to "Submitted Proposal" (ADR-006 §5).
+    if not has_lead:
+        payload["Lead_Status"] = "Submitted Proposal"
     if job.upwork_job_id:
         payload["Upwork_Job_ID"] = job.upwork_job_id
         payload["Job_Link"] = f"https://www.upwork.com/jobs/{job.upwork_job_id}"
@@ -190,6 +193,8 @@ def build_preview(
     classification: Classification | None,
     classification_failure: AiFailure | None,
     connected: bool,
+    *,
+    has_lead: bool = False,
 ) -> LeadPreview:
     approved_text, approved = approved_text_and_quote(versions, approvals)
     payload, truncations = build_payload(
@@ -199,6 +204,7 @@ def build_preview(
         fields,
         classification,
         datetime.now(UTC).date(),
+        has_lead=has_lead,
     )
     flags = compute_flags(classification, fields)
     checklist = [

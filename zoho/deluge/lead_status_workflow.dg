@@ -1,0 +1,42 @@
+// Proposal Forge — Lead Status workflow (F8, ADR-006).
+// Workflow rule on Leads: "on edit", field updated = Lead Status, condition
+// Lead Status is one of Job Closed / Lost Lead / Junk Lead / Not Qualified / Withdrawn,
+// layout = Upwork. Action: this function. Argument: leadId = ${Leads.Lead Id}
+//
+// Mapping (docs/ADRs/ADR-006-outcome-trigger.md): each status is its own reason.
+
+void workflow.forge_lead_status(Int leadId)
+{
+	lead = zoho.crm.getRecordById("Leads", leadId);
+	statusValue = lead.get("Lead_Status");
+	outcome = "";
+	reason = "";
+	if(statusValue == "Lost Lead")
+	{
+		outcome = "lost";
+		reason = "hired_other";
+	}
+	else if(statusValue == "Job Closed")
+	{
+		outcome = "lost";
+		reason = "job_closed";
+	}
+	else if(statusValue == "Junk Lead")
+	{
+		outcome = "lost";
+		reason = "junk_lead";
+	}
+	else if(statusValue == "Not Qualified")
+	{
+		outcome = "lost";
+		reason = "not_qualified";
+	}
+	else if(statusValue == "Withdrawn")
+	{
+		outcome = "withdrawn";
+	}
+	if(outcome != "")
+	{
+		standalone.forge_post_outcome(leadId, outcome, reason);
+	}
+}

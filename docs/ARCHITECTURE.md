@@ -273,8 +273,8 @@ proposal-forge/
 │   ├── F2_WHEELHOUSE.md             F2 design: deterministic comparables + Claude fit verdict
 │   ├── F3_DRAFTING.md               F3/F4 design: hard rules, versions, copy-as-approval, quote evidence
 │   ├── F6_ZOHO_LEAD.md              F6 design: per-user OAuth, Lead preview with thresholds, append-only attempts
+│   ├── F8_OUTCOMES.md               F8 design: outcomes pushed from Zoho, review queue, rag_index, learning surfaces
 │   ├── DEPLOYMENT.md                Vercel + Fly.io + Supabase setup, DNS, data move
-│   ├── RAG.md                       (planned) retrieval design and index schema
 │   ├── governance/
 │   │   ├── AI_GOVERNANCE_RULES.md
 │   │   └── FEATURE_REGISTER.md      per-feature gate; must be satisfied before a build
@@ -283,7 +283,9 @@ proposal-forge/
 │       ├── ADR-002-pwa-vs-native.md
 │       ├── ADR-003-rag-learning.md
 │       ├── ADR-004-ai-governance.md
-│       └── ADR-005-zoho-integration.md
+│       ├── ADR-005-zoho-integration.md
+│       └── ADR-006-outcome-trigger.md
+├── zoho/                            Zoho-side source, deployed by hand: Deluge helper, Won button, Lead Status workflow; README with setup steps
 ├── frontend/                        Next.js App Router + TypeScript, deployed to Vercel
 │   ├── src/
 │   │   ├── app/                     routes: layout.tsx, page.tsx, globals.css

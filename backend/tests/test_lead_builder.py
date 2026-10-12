@@ -73,6 +73,18 @@ def test_payload_fields_from_the_mortgage_fixture(desktop_conflict):
     assert truncations == []
 
 
+def test_lead_status_only_on_first_send(desktop_conflict):
+    # ADR-006 §5: an update must not reset a status the operator set in Zoho.
+    a = analysis(desktop_conflict)
+    first, _ = build_payload(a, None, None, None, GOOD, date(2026, 10, 12))
+    update, _ = build_payload(
+        a, None, None, None, GOOD, date(2026, 10, 12), has_lead=True
+    )
+    assert first["Lead_Status"] == "Submitted Proposal"
+    assert "Lead_Status" not in update
+    assert update["Last_Name"] == "TBD" and update["Lead_Source"] == "Upwork"
+
+
 def test_confirmed_fields_override_the_classifier(desktop_conflict):
     a = analysis(desktop_conflict)
     fields = LeadFields(

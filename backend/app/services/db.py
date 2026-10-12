@@ -20,14 +20,9 @@ class DbError(Exception):
         self.detail = detail
 
 
-class UserDb:
-    def __init__(self, settings: Settings, user_token: str) -> None:
-        self._base = settings.supabase_url.rstrip("/") + "/rest/v1"
-        self._headers = {
-            "apikey": settings.supabase_anon_key,
-            "Authorization": f"Bearer {user_token}",
-            "Content-Type": "application/json",
-        }
+class _Rest:
+    _base: str
+    _headers: dict[str, str]
 
     def _request(self, method: str, path: str, **kwargs: Any) -> Any:
         headers = {**self._headers, **kwargs.pop("headers", {})}
@@ -40,6 +35,39 @@ class UserDb:
         if response.status_code >= 400:
             raise DbError(response.status_code, response.text[:500])
         return response.json() if response.content else None
+
+
+class AnonDb(_Rest):
+    """PostgREST as the anonymous role, for the one inbound call that carries
+    no user JWT (F8). The anon role may execute `record_outcome()` and nothing
+    else; that function resolves the tenant from the secret hash itself."""
+
+    def __init__(self, settings: Settings) -> None:
+        self._base = settings.supabase_url.rstrip("/") + "/rest/v1"
+        self._headers = {
+            "apikey": settings.supabase_anon_key,
+            "Authorization": f"Bearer {settings.supabase_anon_key}",
+            "Content-Type": "application/json",
+        }
+
+    def record_outcome(
+        self, secret_hash: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/rpc/record_outcome",
+            json={"p_secret_hash": secret_hash, "p_payload": payload},
+        )
+
+
+class UserDb(_Rest):
+    def __init__(self, settings: Settings, user_token: str) -> None:
+        self._base = settings.supabase_url.rstrip("/") + "/rest/v1"
+        self._headers = {
+            "apikey": settings.supabase_anon_key,
+            "Authorization": f"Bearer {user_token}",
+            "Content-Type": "application/json",
+        }
 
     # --- job_posts ---------------------------------------------------------
 
@@ -184,6 +212,107 @@ class UserDb:
                 "proposal_id": f"eq.{proposal_id}",
                 "select": "*",
                 "order": "attempted_at.desc",
+            },
+        )
+
+    # --- outcomes (F8) --------------------------------------------------------
+
+    def get_integration_secret(self) -> dict[str, Any] | None:
+        rows = self._request(
+            "GET",
+            "/integration_secrets",
+            params={"select": "user_id,created_at,last_used_at"},
+        )
+        return rows[0] if rows else None
+
+    def upsert_integration_secret(self, row: dict[str, Any]) -> dict[str, Any]:
+        rows = self._request(
+            "POST",
+            "/integration_secrets",
+            params={"on_conflict": "user_id"},
+            json=row,
+            headers={"Prefer": "return=representation,resolution=merge-duplicates"},
+        )
+        return rows[0]
+
+    def delete_integration_secret(self) -> None:
+        self._request(
+            "DELETE", "/integration_secrets", params={"user_id": "not.is.null"}
+        )
+
+    def list_outcomes(self, proposal_id: str) -> list[dict[str, Any]]:
+        return self._request(
+            "GET",
+            "/proposal_outcomes",
+            params={
+                "proposal_id": f"eq.{proposal_id}",
+                "select": "*",
+                "order": "received_at.desc",
+            },
+        )
+
+    def get_rag_index(self, proposal_id: str) -> dict[str, Any] | None:
+        rows = self._request(
+            "GET",
+            "/rag_index",
+            params={"proposal_id": f"eq.{proposal_id}", "select": "*"},
+        )
+        return rows[0] if rows else None
+
+    def set_rag_archived(
+        self, proposal_id: str, archived: bool
+    ) -> dict[str, Any] | None:
+        rows = self._request(
+            "PATCH",
+            "/rag_index",
+            params={"proposal_id": f"eq.{proposal_id}"},
+            json={"archived": archived},
+            headers={"Prefer": "return=representation"},
+        )
+        return rows[0] if rows else None
+
+    def list_outcome_queue(self) -> list[dict[str, Any]]:
+        return self._request(
+            "GET",
+            "/outcome_queue",
+            params={
+                "resolved_at": "is.null",
+                "dismissed_at": "is.null",
+                "select": "*",
+                "order": "received_at.desc",
+            },
+        )
+
+    def dismiss_queued_outcome(self, queue_id: str) -> bool:
+        rows = self._request(
+            "PATCH",
+            "/outcome_queue",
+            params={"id": f"eq.{queue_id}", "dismissed_at": "is.null"},
+            json={"dismissed_at": "now()"},
+            headers={"Prefer": "return=representation"},
+        )
+        return bool(rows)
+
+    def resolve_queued_outcome(self, queue_id: str, proposal_id: str) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/rpc/resolve_queued_outcome",
+            json={"p_queue_id": queue_id, "p_proposal_id": proposal_id},
+        )
+
+    def rebuild_rag_index(self) -> int:
+        return self._request("POST", "/rpc/rebuild_rag_index", json={})
+
+    def list_proposals_for_attention(self) -> list[dict[str, Any]]:
+        """Open proposals with the job title embedded; the strip filters them."""
+        return self._request(
+            "GET",
+            "/proposals",
+            params={
+                "status": "in.(draft,submitted)",
+                "select": "id,status,submitted_at,lead_sync_state,updated_at,"
+                "job_posts(title:analysis->parsed->>title)",
+                "order": "updated_at.desc",
             },
         )
 
