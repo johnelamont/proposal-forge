@@ -268,6 +268,7 @@ def _preview(
         classification,
         failure,
         connected,
+        has_lead=bool(proposal.get("zoho_lead_id")),
     )
     return preview, analysis, proposal
 

@@ -1,0 +1,8 @@
+// Proposal Forge — the Won button (F8).
+// Button on the Lead detail page, Upwork layout. Argument: leadId = ${Leads.Lead Id}
+// Returns the message Zoho shows the operator after the click.
+
+string button.forge_won(Int leadId)
+{
+	return standalone.forge_post_outcome(leadId, "won", "");
+}

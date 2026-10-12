@@ -1,0 +1,105 @@
+// Proposal Forge — shared helper (F8).
+// Function name in Zoho: forge_post_outcome
+// Arguments: leadId (Int), outcome (String), lostReason (String, may be empty)
+//
+// Posts one outcome for a Lead to Proposal Forge, writes the answer to the
+// Lead's Forge_Sync field, and emails the operator on any failure.
+// Org variables (Setup → Developer Space → Organization Variables):
+//   forge_endpoint  e.g. https://api.upworkforge.techledger.ai/api/integrations/zoho/outcome
+//   forge_secret    the integration secret from Settings → Outcome webhook
+//   forge_alert_to  the operator's email for failure alerts
+//
+// Rule 5: only the fields listed in ALLOWED leave Zoho. To add one, add it
+// here AND in backend/app/models/outcomes.py (LEAD_ALLOW_LIST), nowhere else.
+
+string forge_post_outcome(Int leadId, String outcome, String lostReason)
+{
+	endpoint = zoho.crm.getOrgVariable("forge_endpoint");
+	secret = zoho.crm.getOrgVariable("forge_secret");
+	alertTo = zoho.crm.getOrgVariable("forge_alert_to");
+	lead = zoho.crm.getRecordById("Leads", leadId);
+	allowed = List();
+	allowed.add("Industry");
+	allowed.add("Job_Type");
+	allowed.add("Tools");
+	allowed.add("Rate_Type");
+	allowed.add("Hourly_Rate");
+	allowed.add("Upwork_Fixed_Price");
+	allowed.add("Budget");
+	allowed.add("Skills_Required");
+	allowed.add("Deliverables");
+	allowed.add("Client_s_Desired_Experience_Level");
+	snapshot = Map();
+	for each  field in allowed
+	{
+		value = lead.get(field);
+		if(value != null)
+		{
+			snapshot.put(field, value);
+		}
+	}
+	payload = Map();
+	payload.put("schema_version", "1.0");
+	payload.put("upwork_job_id", lead.get("Upwork_Job_ID"));
+	payload.put("zoho_lead_id", leadId.toString());
+	payload.put("outcome", outcome);
+	if(lostReason != null && lostReason != "")
+	{
+		payload.put("lost_reason", lostReason);
+	}
+	else
+	{
+		payload.put("lost_reason", null);
+	}
+	payload.put("decided_at", zoho.currenttime.toString("yyyy-MM-dd'T'HH:mm:ssXXX"));
+	payload.put("lead", snapshot);
+	headers = Map();
+	headers.put("Authorization", "Bearer " + secret);
+	headers.put("Content-Type", "application/json");
+	message = "";
+	try
+	{
+		response = invokeurl
+		[
+			url :endpoint
+			type :POST
+			parameters:payload.toString()
+			headers:headers
+			detailed:true
+		];
+		code = response.get("responseCode");
+		body = response.get("responseText");
+		if(code == 200 || code == 202)
+		{
+			message = body.get("message");
+		}
+		else
+		{
+			detail = body.get("detail");
+			if(detail == null)
+			{
+				detail = body.toString();
+			}
+			message = "ERROR " + code + ": " + detail;
+		}
+	}
+	catch (e)
+	{
+		message = "ERROR timeout or network: " + e.toString();
+	}
+	stamp = zoho.currenttime.toString("yyyy-MM-dd HH:mm");
+	update = Map();
+	update.put("Forge_Sync", (message + " · " + stamp).left(255));
+	zoho.crm.updateRecord("Leads", leadId, update);
+	if(message.startsWith("ERROR") && alertTo != null && alertTo != "")
+	{
+		sendmail
+		[
+			from :zoho.adminuserid
+			to :alertTo
+			subject :"Proposal Forge did not record an outcome"
+			message :"Lead " + leadId + " (" + outcome + "): " + message + "<br>Re-trigger: press Won again, or set Lead Status to another closing value and then the intended one."
+		];
+	}
+	return message;
+}

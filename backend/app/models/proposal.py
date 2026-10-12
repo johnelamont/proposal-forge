@@ -26,6 +26,9 @@ class ProfileIn(BaseModel):
     never_claim: list[str] = Field(default_factory=list, max_length=20)
     default_hourly_rate: Decimal | None = Field(default=None, ge=0)
     fixed_price_range: str | None = Field(default=None, max_length=80)
+    # F8: after this many days a `submitted` proposal with no outcome gets a
+    # "follow up on Upwork?" nudge (Outcome tab, Attention strip).
+    stale_submitted_days: int = Field(default=14, ge=1, le=365)
 
 
 class Profile(ProfileIn):

@@ -28,7 +28,7 @@ Field names below are Zoho API names from the operator's Leads module metadata (
 |---|---|---|---|
 | `Last_Name` | text(80), **layout-required** | `"TBD"` | Constant. No client identity at proposal stage |
 | `Lead_Source` | picklist, **layout-required** | `"Upwork"` | Constant |
-| `Lead_Status` | picklist, **layout-required** | `"Submitted Proposal"` | Constant |
+| `Lead_Status` | picklist, **layout-required** | `"Submitted Proposal"` | Constant, **sent only when the Lead is first created**. Omitted on an update so an outcome status set in Zoho is never reset ([ADR-006 §5](ADRs/ADR-006-outcome-trigger.md)) |
 | `Upwork_Job_ID` | text(255), unique | Upwork job ID | Parsed from job URL, or entered by user |
 | `Industry` | picklist (values below) | Client's industry | **AI-derived** (note 1); required by the app |
 | `Job_Name` | text(255) | Job title | Parsed |
