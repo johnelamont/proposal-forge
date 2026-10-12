@@ -19,6 +19,15 @@ import type {
   WorkHistorySummary,
 } from "@/lib/types/work-history";
 import type {
+  Attention,
+  OutcomeResult,
+  ProposalOutcomes,
+  QueuedOutcome,
+  RagIndexRow,
+  SecretCreated,
+  SecretStatus,
+} from "@/lib/types/outcomes";
+import type {
   ConnectionStatus,
   ConnectStart,
   CreateLeadResult,
@@ -210,6 +219,41 @@ export const zohoApi = {
     }),
   leadAttempts: (proposalId: string) =>
     apiFetch<LeadAttempt[]>(`/api/proposals/${proposalId}/lead-attempts`),
+};
+
+export const outcomesApi = {
+  /** A proposal's outcome history, index row, Zoho Lead link and nudge state. */
+  forProposal: (proposalId: string) =>
+    apiFetch<ProposalOutcomes>(`/api/proposals/${proposalId}/outcomes`),
+  setArchived: (proposalId: string, archived: boolean) =>
+    apiFetch<RagIndexRow>(`/api/proposals/${proposalId}/rag-archived`, {
+      method: "PUT",
+      body: JSON.stringify({ archived }),
+    }),
+  secretStatus: () =>
+    apiFetch<SecretStatus>("/api/integrations/outcome-secret"),
+  /** Generate or rotate; the plaintext comes back exactly once. */
+  generateSecret: () =>
+    apiFetch<SecretCreated>("/api/integrations/outcome-secret", {
+      method: "POST",
+    }),
+  revokeSecret: () =>
+    apiFetch<void>("/api/integrations/outcome-secret", { method: "DELETE" }),
+  queue: () => apiFetch<QueuedOutcome[]>("/api/outcomes/queue"),
+  match: (queueId: string, proposal_id: string) =>
+    apiFetch<OutcomeResult>(`/api/outcomes/queue/${queueId}/match`, {
+      method: "POST",
+      body: JSON.stringify({ proposal_id }),
+    }),
+  dismiss: (queueId: string) =>
+    apiFetch<void>(`/api/outcomes/queue/${queueId}/dismiss`, {
+      method: "POST",
+    }),
+  attention: () => apiFetch<Attention>("/api/attention"),
+  rebuildIndex: () =>
+    apiFetch<{ rebuilt: number }>("/api/outcomes/rebuild-index", {
+      method: "POST",
+    }),
 };
 
 export const workHistoryApi = {

@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 
+import { AttentionStrip } from "@/components/attention-strip";
 import { RecentJobs } from "@/components/jobs/recent-jobs";
 import { SignInForm } from "@/components/sign-in-form";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -26,8 +27,9 @@ export async function AuthStatus() {
 
   return (
     <section className="flex w-full flex-col items-center gap-6">
+      <AttentionStrip />
       <RecentJobs />
-      <nav className="flex gap-4 text-sm">
+      <nav className="flex flex-wrap justify-center gap-4 text-sm">
         <Link href="/history" className="underline">
           Work history
         </Link>
@@ -36,6 +38,12 @@ export async function AuthStatus() {
         </Link>
         <Link href="/settings/zoho" className="underline">
           Zoho
+        </Link>
+        <Link href="/settings/outcomes" className="underline">
+          Outcome webhook
+        </Link>
+        <Link href="/settings/review-queue" className="underline">
+          Review queue
         </Link>
       </nav>
       <p className="text-sm">

@@ -96,6 +96,9 @@ export function ZohoSettings() {
         <Link href="/" className="underline">
           Home
         </Link>
+        <Link href="/settings/outcomes" className="underline">
+          Outcome webhook
+        </Link>
       </nav>
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Zoho CRM</h1>
