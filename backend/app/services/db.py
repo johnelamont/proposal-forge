@@ -215,6 +215,37 @@ class UserDb(_Rest):
             },
         )
 
+    # --- portfolio (F7) -------------------------------------------------------
+
+    def list_work_history_for_portfolio(self) -> list[dict[str, Any]]:
+        """Everything the portfolio may show, plus the naming flag that gates
+        client_name. Never source files, extraction provenance or budget band."""
+        return self._request(
+            "GET",
+            "/work_history",
+            params={
+                "select": "id,name,summary,tech_stack,vertical,project_type,"
+                "complexity,role,outcomes,client_name,may_name_client,started,ended",
+                "order": "ended.desc.nullslast,updated_at.desc",
+            },
+        )
+
+    def insert_portfolio_export(self, row: dict[str, Any]) -> dict[str, Any]:
+        rows = self._request(
+            "POST",
+            "/portfolio_exports",
+            json=row,
+            headers={"Prefer": "return=representation"},
+        )
+        return rows[0]
+
+    def list_portfolio_exports(self) -> list[dict[str, Any]]:
+        return self._request(
+            "GET",
+            "/portfolio_exports",
+            params={"select": "*", "order": "exported_at.desc"},
+        )
+
     # --- outcomes (F8) --------------------------------------------------------
 
     def get_integration_secret(self) -> dict[str, Any] | None:
