@@ -17,8 +17,8 @@ Field names below are Zoho API names from the operator's Leads module metadata (
 5. **Add the Deluge functions.** Source lives in this repo once written. Deploy manually:
    - a shared helper that builds the allow-listed payload and posts it;
    - the **Won** button on the Lead (Upwork layout), which calls the helper with `won` and shows the result message;
-   - *Trigger to be decided:* how `Lost Lead`, `Job Closed`, and `Withdrawn` are sent (workflow rule on `Lead_Status`, buttons, or something else). Whatever is chosen calls the same helper, and must show or notify the result on failure. The endpoint already accepts these outcomes.
-   - *To resolve with F8:* the Lead-out upsert sends `Lead_Status` = `Submitted Proposal` on every press, including an update. Once outcomes are recorded in Zoho, a later **Update Lead** would reset a `Lost Lead` back to `Submitted Proposal`; the update path should then omit `Lead_Status`, or the app should refuse to update a Lead whose outcome is already recorded.
+   - a **workflow rule** on Leads, *on edit* of `Lead_Status`, Upwork layout only, condition `Lead_Status` in (`Job Closed`, `Lost Lead`, `Junk Lead`, `Not Qualified`, `Withdrawn`), whose action is a function that calls the same helper with the mapped outcome ([ADR-006](../ADRs/ADR-006-outcome-trigger.md)). It writes the response to the `Forge_Sync` text field on the Lead and emails the operator on any non-2xx, since a workflow cannot show a message.
+6. **Add the `Forge_Sync` field** (single line, Upwork layout) before deploying the functions. Both the button and the workflow write their result there.
 
 ## Lead out — on **Create Lead**
 
@@ -135,9 +135,13 @@ Note on behaviour (operator, 2026-10-12): the Zoho CRM API accepts a picklist va
 | Zoho trigger | `outcome` | `lost_reason` |
 |---|---|---|
 | **Won** button | `won` | — |
-| `Lead_Status` = `Lost Lead` (trigger TBD) | `lost` | `hired_other` |
-| `Lead_Status` = `Job Closed` (trigger TBD) | `lost` | `job_closed` |
-| `Lead_Status` = `Withdrawn` (trigger TBD) | `withdrawn` | — (recorded and indexed, excluded from win/loss rates) |
+| `Lead_Status` → `Lost Lead` (workflow rule) | `lost` | `hired_other` |
+| `Lead_Status` → `Job Closed` (workflow rule) | `lost` | `job_closed` |
+| `Lead_Status` → `Junk Lead` (workflow rule) | `lost` | `junk_lead` |
+| `Lead_Status` → `Not Qualified` (workflow rule) | `lost` | `not_qualified` |
+| `Lead_Status` → `Withdrawn` (workflow rule) | `withdrawn` | — (recorded and indexed, excluded from win/loss rates) |
+
+A later change to another trigger value posts again and the app appends a new outcome row. Setting the status back to `Submitted Proposal` is not a trigger and is not posted.
 
 **`lead` allow-list (Rule 5).** These are the only Lead fields the helper may send, and the app rejects any others with `400`:
 - `Industry`, `Job_Type`, `Tools`
@@ -162,7 +166,12 @@ Never sent: `Company`, `First_Name`, `Last_Name`, `Email`, `Secondary_Email`, `P
 
 ## Open questions
 
-- **Trigger for lost and withdrawn.** Deferred by the operator. The endpoint and contract support all three outcomes now; only the Zoho-side trigger is undecided.
+None.
+
+## Resolved (2026-10-12)
+
+- **Trigger for lost and withdrawn:** a workflow rule on `Lead_Status` edit ([ADR-006](../ADRs/ADR-006-outcome-trigger.md)). Four lost statuses (`Job Closed`, `Lost Lead`, `Junk Lead`, `Not Qualified`), each its own `lost_reason`, plus `Withdrawn`.
+- **Lead out on update:** `Lead_Status` is sent only when the proposal has no Zoho Lead ID yet, so a status the operator set is never reset. Ships with F8.
 
 ## Resolved (2026-10-04)
 
