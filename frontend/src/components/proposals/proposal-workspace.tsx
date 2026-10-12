@@ -12,6 +12,7 @@ import { sectionText } from "@/lib/copy";
 import type { ProposalOut } from "@/lib/types/proposal";
 
 import { CopyButton } from "./copy-button";
+import { OutcomePanel } from "./outcome-panel";
 import { QuoteCard } from "./quote-card";
 import { SectionCard } from "./section-card";
 import { SubmitPanel } from "./submit-panel";
@@ -307,6 +308,10 @@ export function ProposalWorkspace({ id }: { id: string }) {
 
       {approvals.length > 0 && (
         <SubmitPanel proposalId={id} onSubmitted={refresh} />
+      )}
+
+      {proposal.status !== "draft" && (
+        <OutcomePanel proposalId={id} status={proposal.status} />
       )}
 
       <VersionsList

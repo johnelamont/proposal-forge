@@ -10,6 +10,8 @@ export interface ProfileIn {
   never_claim: string[];
   default_hourly_rate: string | null;
   fixed_price_range: string | null;
+  // F8: days after which a submitted proposal with no outcome gets a nudge.
+  stale_submitted_days: number;
 }
 
 export interface Profile extends ProfileIn {
@@ -27,6 +29,7 @@ export const EMPTY_PROFILE: ProfileIn = {
   never_claim: [],
   default_hourly_rate: null,
   fixed_price_range: null,
+  stale_submitted_days: 14,
 };
 
 export interface Answer {

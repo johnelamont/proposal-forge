@@ -77,6 +77,10 @@ export function ProfileForm() {
             ? String(v.default_hourly_rate).trim()
             : null,
         fixed_price_range: v.fixed_price_range?.trim() || null,
+        stale_submitted_days: Math.min(
+          365,
+          Math.max(1, Math.round(Number(v.stale_submitted_days) || 14)),
+        ),
       });
       setV(saved);
       setNotice("Profile saved.");
@@ -205,6 +209,23 @@ export function ProfileForm() {
               />
             </Field>
           </div>
+
+          <Field
+            label="Follow-up nudge (days)"
+            hint="A submitted proposal with no outcome after this many days is flagged on Home and on its Outcome tab. Default 14."
+          >
+            <input
+              inputMode="numeric"
+              value={v.stale_submitted_days ?? 14}
+              onChange={(e) =>
+                setV((cur) => ({
+                  ...cur,
+                  stale_submitted_days: Number(e.target.value) || 0,
+                }))
+              }
+              className={INPUT + " sm:w-32"}
+            />
+          </Field>
 
           {error && (
             <p

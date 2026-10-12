@@ -10,7 +10,8 @@ export default function Home() {
           Proposal Forge
         </h1>
         <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-          Upwork proposal assistant. Nothing here yet beyond sign-in.
+          Paste a job, decide, draft, copy into Upwork, push the Lead to Zoho.
+          Outcomes come back from Zoho and feed the next draft.
         </p>
       </header>
 
