@@ -7,6 +7,7 @@ from app.routes import (
     health,
     jobs,
     outcomes,
+    portfolio,
     proposals,
     work_history,
     zoho,
@@ -32,6 +33,7 @@ def create_app() -> FastAPI:
     app.include_router(proposals.router)
     app.include_router(zoho.router)
     app.include_router(outcomes.router)
+    app.include_router(portfolio.router)
     return app
 
 
