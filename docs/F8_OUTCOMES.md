@@ -58,7 +58,7 @@ One migration, `supabase/migrations/<ts>_outcomes.sql`:
 
 Append-only is enforced as for approvals and lead attempts: no update/delete policies plus the trigger, with the purge escape for admin sessions.
 
-`rag_index` is derived data. It can always be rebuilt from `proposal_outcomes` + approvals + job posts, which is what `scripts/rebuild_rag_index.py` does; that script also fills the row's `job_terms` for any proposal whose outcome was recorded before a matcher change.
+`rag_index` is derived data. It can always be rebuilt from `proposal_outcomes` + approvals + job posts, which `rebuild_rag_index()` does, behind `POST /api/outcomes/rebuild-index` (built as a function rather than the script first planned, so it also works from the phone).
 
 ## Lead out: one change (ADR-006 §5)
 
@@ -68,7 +68,7 @@ Append-only is enforced as for approvals and lead attempts: no update/delete pol
 
 **Similar past work (F2)** gains a second evidence source. The matcher scores the user's `rag_index` rows with the same term and vocabulary matching it applies to work history (`industry` is Work history's vertical, `job_type` its project type, so they compare directly). `Comparable` gains `kind` (`work_history` / `proposal`) and `outcome`; `MatchStrength` counts both kinds. The card shows "N comparable proposals: W won, L lost" with reasons on hover, replacing the F8 placeholder note. `junk_lead` and `not_qualified` are reported separately from `hired_other` and `job_closed`: "not worth bidding" is a different lesson from "bid and lost". Thin evidence stays labelled thin; fewer than three outcomes in total shows counts only, no verdict.
 
-**Drafting (F3)**, second code PR, behind a profile toggle defaulting to on: when at least one *won* comparable proposal exists in the same `industry`, the drafter prompt gets up to three won excerpts (`proposal_excerpt`, the operator's own copied text, nothing from clients) with their job titles, framed as "proposals that won for this operator in this industry". Rule 5 holds: the excerpts are the operator's words, no client data. The prompt section is logged in `ai_meta` so the Outcome tab's "what was indexed" and the version's meta agree.
+**Drafting (F3)**, second code PR, behind a profile toggle defaulting to on: when the matcher finds *won* past proposals comparable to the job (the job's industry is not known until the Submit step, so comparability stands in for same-industry), the drafter prompt gets up to three won excerpts (`proposal_excerpt`, the operator's own copied text, nothing from clients) with their job titles, framed as "proposals that won", for voice and structure only. Rule 5 holds: the excerpts are the operator's words, no client data. The prompt section is logged in `ai_meta` so the Outcome tab's "what was indexed" and the version's meta agree.
 
 **Archiving.** The Outcome tab lets the operator mark an indexed proposal `archived` so retrieval skips it (ADR-003 "deprecating old proposals"). The outcome history is untouched.
 
@@ -132,3 +132,14 @@ Validation: outcome / reason pairing, every allow-listed key accepted, any other
 2. **F8b** — migration, functions, inbound route and limiter, secret routes, queue and attention routes, Lead-out change, Deluge source and `zoho/README.md`, rebuild script, tests.
 3. **F8c** — Outcome tab, Attention strip, Settings → Outcome webhook and Review queue, Profile setting, Similar past work evidence.
 4. **F8d** — drafter context from won proposals (profile toggle), its tests, and the F8 completion docs.
+
+## As built (2026-10-12)
+
+Where the code differs from the plan above:
+
+- `rag_index` has no `job_terms` column. The matcher scores index rows at query time from `skills`, `tools`, title, industry, job type and the excerpt, with the same aliases and stopwords it applies to work history.
+- `budget_band` is computed in SQL (`forge_budget_band`) from the Lead's numbers or the quote: under $30/h, $30–75/h, over $75/h; under $1k, $1k–10k, over $10k.
+- The rebuild is a SQL function behind a route, not a script.
+- Won examples for the drafter are chosen by comparability, not same industry; `ai_meta.won_examples_used` on the version records which titles were shown.
+- The Lead snapshot stored with an outcome holds only the fields Zoho actually sent (nulls dropped), so the history shows what arrived.
+- The advisory's Claude call still requires at least one work-history comparable; outcome evidence alone is shown as counts without a verdict.

@@ -19,6 +19,7 @@ Single operator, mobile-first. Everything must work one-handed on a phone with a
 /portfolio             PDF export: select → preview → approve → download           F7
 /analytics             Win rate by vertical, budget band, tech; abandon stats      —
 /settings              Zoho connection, webhook secret, name allow-list, account   F6, F7, F8
+/settings/outcomes     Outcome webhook: secret (shown once), endpoint URL, last received  F8
 /settings/review-queue Outcomes that arrived with an unmatched job ID              F8
 ```
 

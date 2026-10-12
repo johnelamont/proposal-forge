@@ -35,10 +35,12 @@ def compute_advisory(job_id: str, db: Db, advisor: AdvisorDep) -> JobPostOut:
     analysis = JobAnalysis.model_validate(row["analysis"])
     try:
         history = db.list_work_history_for_matching()
+        # F8: the operator's own past proposals with outcomes (not archived).
+        index_rows = db.list_rag_index_for_matching()
     except DbError as e:
         raise HTTPException(e.status_code, e.detail) from e
 
-    advisory: Advisory = advisor.advise(analysis, history)
+    advisory: Advisory = advisor.advise(analysis, history, index_rows)
     try:
         row = db.update_job_post(
             job_id,

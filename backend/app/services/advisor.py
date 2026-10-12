@@ -9,18 +9,31 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.models.advisory import Advisory, AdvisoryReading, Comparable
+from app.models.advisory import (
+    Advisory,
+    AdvisoryReading,
+    Comparable,
+    ProposalComparable,
+)
 from app.models.job import AiFailure, JobAnalysis
 from app.services.claude import ClaudeClient, build_client, structured_call
-from app.services.matcher import find_comparables, match_strength
+from app.services.matcher import (
+    find_comparables,
+    find_proposal_comparables,
+    match_strength,
+    outcome_evidence,
+)
 
 SYSTEM_PROMPT = """\
 You advise a freelance consultant on whether a job they are considering is \
-in their wheelhouse, using only two things: the job post, and summaries of \
-the consultant's past projects that a matching step found comparable.
+in their wheelhouse, using only the material given: the job post, summaries \
+of the consultant's past projects that a matching step found comparable, and, \
+where present, the outcomes of their own earlier bids on comparable jobs.
 
 Work only from the text given. Do not invent past work, skills, or results. \
-There is no win/loss history yet; judge fit on the work itself.
+PAST PROPOSAL OUTCOMES, where given, are the consultant's own record (won, \
+lost, withdrawn) with no client data; treat them as a signal about fit, but a \
+handful of outcomes is a weak sample. Never state or imply a win rate.
 
 - fit: strong (they have done this kind of work with these tools), partial \
 (real overlap but notable gaps), weak (only loose similarity), none.
@@ -53,6 +66,7 @@ def build_prompt(
     analysis: JobAnalysis,
     comparables: list[Comparable],
     history: list[dict[str, Any]],
+    proposal_comparables: list[ProposalComparable] | None = None,
 ) -> str:
     job = analysis.parsed
     parts = [f"JOB: {job.title or '(untitled)'}", ""]
@@ -78,6 +92,26 @@ def build_prompt(
             parts.append(f"{field}: {value}")
         if c.shared_tech or c.shared_terms:
             parts.append("matched on: " + ", ".join(c.shared_tech + c.shared_terms[:5]))
+
+    # F8: outcomes of the operator's own comparable bids. Title, category and
+    # result only — the copied text stays out of the advisory prompt.
+    if proposal_comparables:
+        parts += [
+            "",
+            "PAST PROPOSAL OUTCOMES (this consultant's own bids on comparable jobs):",
+        ]
+        for p in proposal_comparables:
+            result = p.outcome + (f" ({p.lost_reason})" if p.lost_reason else "")
+            category = " / ".join(filter(None, [p.industry, p.job_type]))
+            line = f"- {p.job_title or '(untitled)'}"
+            if category:
+                line += f" — {category}"
+            line += f" — {result}"
+            if p.shared_tech or p.shared_terms:
+                line += " — matched on: " + ", ".join(
+                    p.shared_tech + p.shared_terms[:5]
+                )
+            parts.append(line)
     return "\n".join(parts)
 
 
@@ -92,21 +126,44 @@ class Advisor:
         self._model = model
         self._timeout = timeout_seconds
 
-    def advise(self, analysis: JobAnalysis, history: list[dict[str, Any]]) -> Advisory:
+    def advise(
+        self,
+        analysis: JobAnalysis,
+        history: list[dict[str, Any]],
+        index_rows: list[dict[str, Any]] | None = None,
+    ) -> Advisory:
         one_line = analysis.ai.one_line if analysis.ai else None
         comparables = find_comparables(analysis.parsed, one_line, history)
         strength = match_strength(comparables, len(history))
+        rows = index_rows or []
+        proposal_comparables = find_proposal_comparables(
+            analysis.parsed, one_line, rows
+        )
+        evidence = outcome_evidence(proposal_comparables, len(rows))
+        extras = {
+            "proposal_comparables": proposal_comparables,
+            "outcome_evidence": evidence,
+            "outcomes_note": evidence.label,
+        }
 
+        # Claude's reading needs past work to judge; outcomes alone are shown
+        # as counts without a verdict.
         if not comparables:
             return Advisory(
-                comparables=[], match_strength=strength, reading=None, failure=None
+                comparables=[],
+                match_strength=strength,
+                reading=None,
+                failure=None,
+                **extras,
             )
 
         result = structured_call(
             self._client,
             model=self._model,
             system=SYSTEM_PROMPT,
-            user_text=build_prompt(analysis, comparables, history),
+            user_text=build_prompt(
+                analysis, comparables, history, proposal_comparables
+            ),
             schema=AdvisoryReading,
             timeout_seconds=self._timeout,
         )
@@ -121,6 +178,7 @@ class Advisor:
             match_strength=strength,
             reading=reading,
             failure=failure,
+            **extras,
         )
 
 

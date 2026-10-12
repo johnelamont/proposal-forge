@@ -21,9 +21,16 @@ class FakeDb(JobsFakeDb):
     def __init__(self):
         super().__init__()
         self.history: list[dict] = []
+        self.index_rows: list[dict] = []
 
     def list_work_history_for_matching(self):
         return self.history
+
+    def list_rag_index_for_matching(self):
+        return [r for r in self.index_rows if not r.get("archived")]
+
+    def get_rag_excerpts(self, ids):
+        return [r for r in self.index_rows if r["proposal_id"] in ids]
 
 
 @pytest.fixture
@@ -82,7 +89,8 @@ def test_advisory_with_comparable_history_calls_claude_and_persists(
     assert adv["comparables"][0]["shared_tech"] == ["Deluge", "Zoho CRM"]
     assert "velocity" in adv["comparables"][0]["shared_terms"]
     assert adv["reading"]["fit"] == "strong"
-    assert "F8" in adv["outcomes_note"]
+    assert adv["outcomes_note"].startswith("No proposal outcomes recorded")
+    assert adv["outcome_evidence"]["indexed"] == 0
     assert len(claude.calls) == 1
     # Reopening the job returns the stored advisory without another call.
     again = client.get(f"/api/jobs/{job_id}").json()

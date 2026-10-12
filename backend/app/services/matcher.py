@@ -9,7 +9,12 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from app.models.advisory import Comparable, MatchStrength
+from app.models.advisory import (
+    Comparable,
+    MatchStrength,
+    OutcomeEvidence,
+    ProposalComparable,
+)
 from app.models.job import ParsedJob
 
 # A term expands to itself plus its family, so "Zoho CRM" in a job meets
@@ -303,6 +308,9 @@ KEEP_SHORT = {"ai", "ui", "ux", "go", "c#", "c++", "r", "bi"}
 MAX_COMPARABLES = 5
 MIN_TECH_OVERLAP = 1
 MIN_KEYWORD_OVERLAP = 3
+# F8: fewer recorded outcomes than this and the evidence is shown as counts
+# only — too small a sample to read anything into (ADR-003).
+MIN_OUTCOMES_FOR_VERDICT = 3
 
 
 def normalise(term: str) -> str:
@@ -395,6 +403,118 @@ def find_comparables(
     matches = [c for e in history if (c := score_entry(job, one_line, e))]
     matches.sort(key=lambda c: (-c.score, c.name.lower()))
     return matches[:MAX_COMPARABLES]
+
+
+# --- F8: the operator's own past proposals with outcomes -----------------------
+
+
+def _split_tools(tools: str | None) -> list[str]:
+    return [t.strip() for t in (tools or "").split(",") if t.strip()]
+
+
+def score_proposal(
+    job: ParsedJob, one_line: str | None, row: dict[str, Any]
+) -> ProposalComparable | None:
+    """Same shape as score_entry, over a rag_index row: the job's skills meet
+    the past job's skills and the Lead's Tools; prose meets title, industry,
+    job type and the operator's own copied text."""
+    job_skills, job_keywords = _job_terms(job, one_line)
+    stack: list[str] = list(row.get("skills") or []) + _split_tools(row.get("tools"))
+    row_tech = tech_terms(stack)
+    row_text = " ".join(
+        filter(
+            None,
+            [
+                row.get("job_title"),
+                row.get("industry"),
+                row.get("job_type"),
+                row.get("proposal_excerpt"),
+            ],
+        )
+    )
+    row_keywords = tokens(row_text) | row_tech
+
+    shared_tech_norm = job_skills & row_tech
+    shared_tech = sorted(
+        {s for s in stack if expand(s) & shared_tech_norm}, key=str.lower
+    )
+    shared_tech_norm |= job_skills & row_keywords
+    shared_terms = sorted((job_keywords & row_keywords) - shared_tech_norm)
+    if (
+        len(shared_tech_norm) < MIN_TECH_OVERLAP
+        and len(shared_terms) < MIN_KEYWORD_OVERLAP
+    ):
+        return None
+
+    industry_bonus = 1.0 if tokens(row.get("industry")) & job_keywords else 0.0
+    score = 2.0 * len(shared_tech_norm) + 0.5 * min(len(shared_terms), 10)
+    return ProposalComparable(
+        proposal_id=row["proposal_id"],
+        job_title=row.get("job_title"),
+        outcome=row["outcome"],
+        lost_reason=row.get("lost_reason"),
+        industry=row.get("industry"),
+        job_type=row.get("job_type"),
+        score=round(score + industry_bonus, 2),
+        shared_tech=shared_tech,
+        shared_terms=shared_terms[:8],
+        decided_at=row.get("decided_at"),
+    )
+
+
+def find_proposal_comparables(
+    job: ParsedJob, one_line: str | None, rows: list[dict[str, Any]]
+) -> list[ProposalComparable]:
+    matches = [c for r in rows if (c := score_proposal(job, one_line, r))]
+    matches.sort(key=lambda c: (-c.score, (c.job_title or "").lower()))
+    return matches[:MAX_COMPARABLES]
+
+
+def outcome_evidence(
+    comparables: list[ProposalComparable], indexed_count: int
+) -> OutcomeEvidence:
+    won = sum(1 for c in comparables if c.outcome == "won")
+    withdrawn = sum(1 for c in comparables if c.outcome == "withdrawn")
+    lost_bid = sum(
+        1
+        for c in comparables
+        if c.outcome == "lost" and c.lost_reason in ("hired_other", "job_closed")
+    )
+    lost_not_worth = sum(
+        1
+        for c in comparables
+        if c.outcome == "lost" and c.lost_reason in ("junk_lead", "not_qualified")
+    )
+    n = len(comparables)
+    if indexed_count == 0:
+        label = "No proposal outcomes recorded yet"
+    elif n == 0:
+        label = f"No comparable past proposals (of {indexed_count} with an outcome)"
+    else:
+        parts = []
+        if won:
+            parts.append(f"{won} won")
+        if lost_bid:
+            parts.append(f"{lost_bid} lost")
+        if lost_not_worth:
+            parts.append(f"{lost_not_worth} judged not worth bidding")
+        if withdrawn:
+            parts.append(f"{withdrawn} withdrawn")
+        label = f"{n} comparable past proposal{'s' if n != 1 else ''}: " + ", ".join(
+            parts
+        )
+        if indexed_count < MIN_OUTCOMES_FOR_VERDICT:
+            label += " (too few outcomes yet to read anything into)"
+    return OutcomeEvidence(
+        indexed=indexed_count,
+        comparable=n,
+        won=won,
+        lost_bid=lost_bid,
+        lost_not_worth=lost_not_worth,
+        withdrawn=withdrawn,
+        label=label,
+        verdict_allowed=indexed_count >= MIN_OUTCOMES_FOR_VERDICT,
+    )
 
 
 def match_strength(comparables: list[Comparable], history_count: int) -> MatchStrength:

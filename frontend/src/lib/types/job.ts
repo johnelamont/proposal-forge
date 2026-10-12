@@ -177,11 +177,39 @@ export interface AdvisoryReading {
   };
 }
 
+// F8: the operator's own past proposals with outcomes.
+export interface ProposalComparable {
+  proposal_id: string;
+  job_title: string | null;
+  outcome: "won" | "lost" | "withdrawn";
+  lost_reason: string | null;
+  industry: string | null;
+  job_type: string | null;
+  score: number;
+  shared_tech: string[];
+  shared_terms: string[];
+  decided_at: string | null;
+}
+
+export interface OutcomeEvidence {
+  indexed: number;
+  comparable: number;
+  won: number;
+  lost_bid: number;
+  lost_not_worth: number;
+  withdrawn: number;
+  label: string;
+  verdict_allowed: boolean;
+}
+
 export interface Advisory {
   comparables: Comparable[];
   match_strength: MatchStrength;
   reading: AdvisoryReading | null;
   failure: AiFailure | null;
+  // Optional: advisories stored before F8 have neither.
+  proposal_comparables?: ProposalComparable[];
+  outcome_evidence?: OutcomeEvidence | null;
   outcomes_note: string;
 }
 

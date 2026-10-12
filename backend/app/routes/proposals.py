@@ -183,7 +183,20 @@ def _generate(
     except DbError as e:
         raise _http(e) from e
     questions = questions_for(analysis, proposal.get("extra_questions") or [])
-    sections, meta = drafter.draft(analysis, advisory, cited, profile, questions)
+    # F8: up to three of the operator's own won letters on comparable jobs,
+    # when the profile allows it and the advisory found any.
+    won_examples: list[dict[str, Any]] = []
+    if profile.use_won_examples and advisory and advisory.proposal_comparables:
+        won_ids = [
+            p.proposal_id for p in advisory.proposal_comparables if p.outcome == "won"
+        ][:3]
+        try:
+            won_examples = db.get_rag_excerpts(won_ids)
+        except DbError as e:
+            raise _http(e) from e
+    sections, meta = drafter.draft(
+        analysis, advisory, cited, profile, questions, won_examples=won_examples
+    )
     sections.quote = propose_quote(analysis.parsed, profile, cited, analysis.conflicts)
     return _append_version(db, proposal, sections, "ai", meta)
 

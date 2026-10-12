@@ -107,7 +107,8 @@ class FakeDrafter:
         self.fail = False
         self.refine_fail = False
 
-    def draft(self, analysis, advisory, cited, profile, questions):
+    def draft(self, analysis, advisory, cited, profile, questions, won_examples=None):
+        self.won_examples = list(won_examples or [])
         if self.fail:
             return (
                 Sections(
