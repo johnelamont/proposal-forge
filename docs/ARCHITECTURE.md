@@ -274,6 +274,7 @@ proposal-forge/
 │   ├── F3_DRAFTING.md               F3/F4 design: hard rules, versions, copy-as-approval, quote evidence
 │   ├── F6_ZOHO_LEAD.md              F6 design: per-user OAuth, Lead preview with thresholds, append-only attempts
 │   ├── F8_OUTCOMES.md               F8 design: outcomes pushed from Zoho, review queue, rag_index, learning surfaces
+│   ├── F7_PORTFOLIO.md              F7 design: deterministic PDF from confirmed records, preview → approve → logged export
 │   ├── DEPLOYMENT.md                Vercel + Fly.io + Supabase setup, DNS, data move
 │   ├── governance/
 │   │   ├── AI_GOVERNANCE_RULES.md

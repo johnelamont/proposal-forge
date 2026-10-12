@@ -8,7 +8,7 @@ Upwork proposal assistant: parse job posts, draft proposals with the Claude API,
 - `docs/ARCHITECTURE.md` — system design and data flow
 - `docs/ADRs/` — decisions. Read the relevant ADR before changing stack, auth, or the learning approach. New decisions get a new ADR (`ADR-NNN-short-name.md`), not edits to accepted ones.
 - `docs/governance/` — AI governance rules (`AI_GOVERNANCE_RULES.md`) and the per-feature register (`FEATURE_REGISTER.md`). See below.
-- `docs/F*_*.md` — one design note per feature (F1, F2, F3, F5, F6, F8), written before its code; `docs/ZOHO_INTEGRATION.md` is the Zoho field mapping and wire contract.
+- `docs/F*_*.md` — one design note per feature (F1, F2, F3, F5, F6, F7, F8), written before its code; `docs/ZOHO_INTEGRATION.md` is the Zoho field mapping and wire contract.
 - `backend/` — FastAPI on Python 3.12, managed with uv. `app/main.py` (app factory), `app/routes/` (one module per resource), `app/services/` (the only home for Claude and Zoho clients), `app/core/config.py` (pydantic-settings from `.env`), `tests/`. Ruff for lint and format, pytest, Dockerfile for Fly.io.
 - `frontend/` — Next.js App Router + TypeScript under `src/`, Tailwind, ESLint + Prettier. Supabase auth via `src/lib/supabase/` (email + password; magic link or OAuth can be added later). Deploys to Vercel.
 - `supabase/` — Supabase CLI project. Schema lives in `supabase/migrations/` (SQL, versioned); local stack runs in Docker with `supabase start`.
