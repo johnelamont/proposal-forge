@@ -12,6 +12,8 @@ export interface ProfileIn {
   fixed_price_range: string | null;
   // F8: days after which a submitted proposal with no outcome gets a nudge.
   stale_submitted_days: number;
+  // F8: let the drafter see your own won letters on comparable jobs.
+  use_won_examples: boolean;
 }
 
 export interface Profile extends ProfileIn {
@@ -30,6 +32,7 @@ export const EMPTY_PROFILE: ProfileIn = {
   default_hourly_rate: null,
   fixed_price_range: null,
   stale_submitted_days: 14,
+  use_won_examples: true,
 };
 
 export interface Answer {

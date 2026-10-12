@@ -29,6 +29,9 @@ class ProfileIn(BaseModel):
     # F8: after this many days a `submitted` proposal with no outcome gets a
     # "follow up on Upwork?" nudge (Outcome tab, Attention strip).
     stale_submitted_days: int = Field(default=14, ge=1, le=365)
+    # F8: let the drafter see up to three of the operator's own won letters
+    # on comparable jobs (voice and structure only).
+    use_won_examples: bool = True
 
 
 class Profile(ProfileIn):
@@ -103,6 +106,8 @@ class AiMeta(BaseModel):
     confidence: dict[str, float] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
     failure: AiFailure | None = None
+    # F8: titles of the won proposals whose excerpts were in the prompt.
+    won_examples_used: list[str] = Field(default_factory=list)
 
 
 class DraftVersion(BaseModel):

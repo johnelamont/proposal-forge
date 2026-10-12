@@ -84,6 +84,8 @@ export function AdvisoryCard({
   }
 
   const { match_strength: ms, comparables, reading, failure } = advisory;
+  const pastProposals = advisory.proposal_comparables ?? [];
+  const evidence = advisory.outcome_evidence ?? null;
 
   return (
     <Card title="Similar past work" aside={refresh}>
@@ -189,9 +191,57 @@ export function AdvisoryCard({
           </>
         )}
 
+        {/* F8: the operator's own past proposals with outcomes */}
+        <Section name="Your past proposals on jobs like this">
+          <p className="text-sm font-medium">
+            {evidence?.label ?? advisory.outcomes_note}
+          </p>
+          {pastProposals.length > 0 && (
+            <ul className="mt-2 divide-y divide-neutral-200 rounded border border-neutral-200 text-sm dark:divide-neutral-800 dark:border-neutral-800">
+              {pastProposals.map((p) => (
+                <li
+                  key={p.proposal_id}
+                  className="flex flex-col gap-1 px-3 py-2"
+                >
+                  <span className="flex items-baseline justify-between gap-3">
+                    <Link
+                      href={`/proposals/${p.proposal_id}`}
+                      className="underline"
+                    >
+                      {p.job_title ?? "Untitled job"}
+                    </Link>
+                    <span
+                      className={`shrink-0 rounded px-1.5 py-0.5 text-xs font-medium ${
+                        p.outcome === "won"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          : p.outcome === "withdrawn"
+                            ? "bg-neutral-200 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200"
+                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                      }`}
+                    >
+                      {p.outcome}
+                      {p.lost_reason && ` · ${p.lost_reason.replace("_", " ")}`}
+                    </span>
+                  </span>
+                  <span className="flex flex-wrap items-center gap-1 text-xs text-neutral-500">
+                    {[p.industry, p.job_type].filter(Boolean).join(" · ")}
+                    {p.shared_tech.map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full bg-neutral-100 px-2 py-0.5 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+
         <p className="text-xs text-neutral-500">
-          {advisory.outcomes_note}
-          {computedAt && ` · Compared ${new Date(computedAt).toLocaleString()}`}
+          {computedAt && `Compared ${new Date(computedAt).toLocaleString()}`}
         </p>
       </div>
     </Card>

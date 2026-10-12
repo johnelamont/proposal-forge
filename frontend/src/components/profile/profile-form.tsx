@@ -227,6 +227,26 @@ export function ProfileForm() {
             />
           </Field>
 
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={v.use_won_examples ?? true}
+              onChange={(e) =>
+                setV((cur) => ({ ...cur, use_won_examples: e.target.checked }))
+              }
+              className="mt-1"
+            />
+            <span>
+              Learn from proposals that won
+              <span className="block text-xs text-neutral-500">
+                When a new job resembles one you won, the drafter is shown up to
+                three of your own winning cover letters for voice and structure.
+                Facts still come only from the job, your profile and your work
+                history. Each version records which were used.
+              </span>
+            </span>
+          </label>
+
           {error && (
             <p
               role="alert"

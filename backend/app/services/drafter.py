@@ -49,6 +49,10 @@ saying and stop.
 - Do not write a greeting or a sign-off; the consultant's own are added \
 afterwards. Begin the cover letter with the first sentence of substance.
 - Follow TONE NOTES where given.
+- PROPOSALS THAT WON, where given, are the consultant's own earlier letters \
+that succeeded on comparable jobs. Borrow their voice, structure and level of \
+detail. Never borrow facts, figures, project names or claims from them; only \
+the material above this section may be asserted.
 
 Return: cover_letter (the body only), answers (one per question, with the \
 question text repeated), and a confidence from 0 to 1 for each part.
@@ -119,12 +123,18 @@ def questions_for(analysis: JobAnalysis, extra_questions: list[str]) -> list[str
     return out
 
 
+# Fields of a won past proposal (rag_index row) that may cross the R5
+# boundary: the operator's own title/category and their own copied text.
+WON_EXAMPLE_FIELDS = ("job_title", "industry", "proposal_excerpt")
+
+
 def build_draft_prompt(
     analysis: JobAnalysis,
     advisory: Advisory | None,
     cited: list[dict[str, Any]],
     profile: Profile,
     questions: list[str],
+    won_examples: list[dict[str, Any]] | None = None,
 ) -> str:
     job = analysis.parsed
     parts = ["CONSULTANT", profile.positioning.strip() or "(no positioning given)"]
@@ -160,6 +170,17 @@ def build_draft_prompt(
             if isinstance(value, list):
                 value = ", ".join(str(v) for v in value)
             parts.append(f"{field}: {value}")
+    if won_examples:
+        parts += [
+            "",
+            "PROPOSALS THAT WON (the consultant's own earlier letters on "
+            "comparable jobs — voice and structure only)",
+        ]
+        for ex in won_examples:
+            title = ex.get("job_title") or "(untitled)"
+            industry = ex.get("industry")
+            header = f"--- {title}" + (f" ({industry})" if industry else "") + " ---"
+            parts += ["", header, (ex.get("proposal_excerpt") or "").strip()]
     parts += ["", "QUESTIONS"]
     if questions:
         parts += [f"{i + 1}. {q}" for i, q in enumerate(questions)]
@@ -186,14 +207,23 @@ class Drafter:
         cited: list[dict[str, Any]],
         profile: Profile,
         questions: list[str],
+        won_examples: list[dict[str, Any]] | None = None,
     ) -> tuple[Sections, AiMeta]:
         """A full draft. On failure the sections are empty and the failure is
         in the meta: the caller stores it as a version so the operator sees it."""
+        examples = [
+            {k: ex.get(k) for k in WON_EXAMPLE_FIELDS} for ex in (won_examples or [])
+        ]
+        used = [
+            str(ex.get("job_title") or ex.get("proposal_id") or "?") for ex in examples
+        ]
         result = structured_call(
             self._client,
             model=self._model,
             system=SYSTEM_PROMPT,
-            user_text=build_draft_prompt(analysis, advisory, cited, profile, questions),
+            user_text=build_draft_prompt(
+                analysis, advisory, cited, profile, questions, examples
+            ),
             schema=DraftOutput,
             max_tokens=16000,
             timeout_seconds=self._timeout,
@@ -204,7 +234,7 @@ class Drafter:
                     cover_letter=None,
                     answers=[Answer(question=q, answer="") for q in questions],
                 ),
-                AiMeta(model=self._model, failure=result),
+                AiMeta(model=self._model, failure=result, won_examples_used=used),
             )
 
         answers = _align_answers(result.answers, questions)
@@ -221,6 +251,7 @@ class Drafter:
                 model=self._model,
                 confidence=result.confidence.model_dump(),
                 warnings=warnings,
+                won_examples_used=used,
             ),
         )
 

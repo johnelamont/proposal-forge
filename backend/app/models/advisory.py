@@ -63,11 +63,45 @@ class AdvisoryReading(BaseModel):
     confidence: AdvisoryConfidence
 
 
+class ProposalComparable(BaseModel):
+    """One of the operator's own past proposals with a recorded outcome (F8)
+    that resembles the job. Operator's data only; no client identity exists
+    in the index."""
+
+    proposal_id: str
+    job_title: str | None
+    outcome: Literal["won", "lost", "withdrawn"]
+    lost_reason: str | None
+    industry: str | None
+    job_type: str | None
+    score: float
+    shared_tech: list[str]
+    shared_terms: list[str]
+    decided_at: str | None
+
+
+class OutcomeEvidence(BaseModel):
+    """Win/loss counts over the comparable past proposals. Counts, not a
+    rate: below MIN_OUTCOMES_FOR_VERDICT the sample is too small to read."""
+
+    indexed: int
+    comparable: int
+    won: int
+    lost_bid: int  # hired_other, job_closed: bid and lost
+    lost_not_worth: int  # junk_lead, not_qualified: should not have bid
+    withdrawn: int
+    label: str
+    verdict_allowed: bool
+
+
 class Advisory(BaseModel):
     comparables: list[Comparable]
     match_strength: MatchStrength
     reading: AdvisoryReading | None
     failure: AiFailure | None
+    proposal_comparables: list[ProposalComparable] = Field(default_factory=list)
+    outcome_evidence: OutcomeEvidence | None = None
     outcomes_note: str = (
-        "Win/loss evidence appears once proposal outcomes are recorded (F8)."
+        "No proposal outcomes recorded yet; win/loss evidence appears as Zoho "
+        "posts them."
     )

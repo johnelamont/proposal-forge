@@ -303,6 +303,33 @@ class UserDb(_Rest):
     def rebuild_rag_index(self) -> int:
         return self._request("POST", "/rpc/rebuild_rag_index", json={})
 
+    def list_rag_index_for_matching(self) -> list[dict[str, Any]]:
+        """F2 reads the operator's own past proposals with outcomes. The
+        index holds no client identity; archived rows are skipped."""
+        return self._request(
+            "GET",
+            "/rag_index",
+            params={
+                "archived": "eq.false",
+                "select": "proposal_id,outcome,lost_reason,industry,job_type,"
+                "tools,skills,job_title,proposal_excerpt,decided_at",
+            },
+        )
+
+    def get_rag_excerpts(self, proposal_ids: list[str]) -> list[dict[str, Any]]:
+        """Won examples for the drafter: title, industry, the operator's text."""
+        if not proposal_ids:
+            return []
+        return self._request(
+            "GET",
+            "/rag_index",
+            params={
+                "proposal_id": "in.(" + ",".join(proposal_ids) + ")",
+                "archived": "eq.false",
+                "select": "proposal_id,job_title,industry,proposal_excerpt,outcome",
+            },
+        )
+
     def list_proposals_for_attention(self) -> list[dict[str, Any]]:
         """Open proposals with the job title embedded; the strip filters them."""
         return self._request(
