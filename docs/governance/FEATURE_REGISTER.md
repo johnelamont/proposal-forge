@@ -104,6 +104,8 @@ Upwork exposes no contact details or regulated data in job posts. Sections that 
 | **Failure path (R8)** | POST failure → proposal stays `submitted` with a visible "Lead not created — retry"; never drop silently. Repeat clicks upsert on `upwork_job_id`, so no duplicate Leads. **Create Lead** is disabled until all required fields (`upwork_job_id`, `Industry`, plus the list in ZOHO_INTEGRATION.md) are filled; a Lead is never sent incomplete. `upwork_job_id` can be missing after a mobile paste (F1); the UI asks for the job link before enabling the button. |
 | **ToS / legal (R4)** | Operator's own Zoho account via its documented REST API and OAuth (create/update on Leads only) and its own Deluge functions — permitted. Review on Zoho API version or terms changes. |
 
+*Built 2026-10-12 (PR #25 design, PR #26 backend, PR #27 screens). Satisfied in code and tests: `backend/tests/test_lead_builder.py` (constants, truncations, flags at and below threshold, off-list values flagged, checklist gating), `test_lead_classifier.py` (picklist-constrained output, R8 failure paths), `test_crypto.py` (token at rest), `test_zoho_routes.py` (connect/complete/disconnect under the user's JWT, create-lead logs an attempt on success and on failure, reconnect signalling), migration `20261011100000_zoho_lead.sql` (`lead_attempts` append-only trigger). Live-tested 2026-10-12: connect, flagged field confirmed from the checklist, create, then update of the same Lead.*
+
 ### F7 — PDF portfolio export
 
 | | |
