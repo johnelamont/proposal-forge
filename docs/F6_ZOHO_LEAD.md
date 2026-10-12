@@ -39,7 +39,7 @@ Payload per [ZOHO_INTEGRATION.md → Lead out](ZOHO_INTEGRATION.md#lead-out--on-
 
 | Field group | From |
 |---|---|
-| Constants: `Last_Name="TBD"`, `Lead_Source="Upwork"`, `Lead_Status="New Lead"` | code |
+| Constants: `Last_Name="TBD"`, `Lead_Source="Upwork"`, `Lead_Status="Submitted Proposal"` | code |
 | `Upwork_Job_ID`, `Job_Name`, `Job_Link`, `Budget`, `Rate_Type`, `Skills_Required`, `Client_s_Desired_Experience_Level`, `Deliverables` | F1's parse and reading |
 | `Proposal`, `Hourly_Rate` / `Upwork_Fixed_Price` | the **latest copied (approved) version** — the text the client actually saw — and its quote |
 | `Proposal_Date` | the Create Lead click |

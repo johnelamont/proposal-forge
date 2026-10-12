@@ -132,7 +132,7 @@ def parse_job_post(raw: str) -> ParsedJob:
 **Upwork Job ID capture:** extracted during job parsing when the pasted text includes the job URL; otherwise the user pastes the job URL or ID. It's required before **Create Lead** is enabled, and unique per user (one proposal per job).
 
 **Lead out, in brief:**
-- Created on the Upwork layout with its required fields: `Lead_Status` = `New Lead`, `Last_Name` = `TBD`, `Lead_Source` = `Upwork`. No client identity or other PII is sent.
+- Created on the Upwork layout with its required fields: `Lead_Status` = `Submitted Proposal`, `Last_Name` = `TBD`, `Lead_Source` = `Upwork`. No client identity or other PII is sent.
 - The Lead carries the job details, the approved proposal text, the quote, and the parsed job attributes ([full mapping](ZOHO_INTEGRATION.md#lead-out--on-create-lead)).
 - The user previews the Lead before sending. AI-derived fields (including `Industry`) below their confidence threshold are flagged and must be confirmed ([feature register F6](governance/FEATURE_REGISTER.md)).
 - **Create Lead** stays disabled until required fields (`Industry` and others, [listed here](ZOHO_INTEGRATION.md#required-before-create-lead)) are filled. An incomplete Lead is never sent.

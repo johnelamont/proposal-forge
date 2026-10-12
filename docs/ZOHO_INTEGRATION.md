@@ -27,7 +27,7 @@ Field names below are Zoho API names from the operator's Leads module metadata (
 |---|---|---|---|
 | `Last_Name` | text(80), **layout-required** | `"TBD"` | Constant. No client identity at proposal stage |
 | `Lead_Source` | picklist, **layout-required** | `"Upwork"` | Constant |
-| `Lead_Status` | picklist, **layout-required** | `"New Lead"` | Constant |
+| `Lead_Status` | picklist, **layout-required** | `"Submitted Proposal"` | Constant |
 | `Upwork_Job_ID` | text(255), unique | Upwork job ID | Parsed from job URL, or entered by user |
 | `Industry` | picklist (values below) | Client's industry | **AI-derived** (note 1); required by the app |
 | `Job_Name` | text(255) | Job title | Parsed |
@@ -164,7 +164,7 @@ Never sent: `Company`, `First_Name`, `Last_Name`, `Email`, `Secondary_Email`, `P
 ## Resolved (2026-10-04)
 
 - The `lead` allow-list above is confirmed as the full set of fields a win carries.
-- Leads are created on the Upwork layout. Its required fields are `Lead_Status` = `New Lead`, `Last_Name` = `TBD`, and `Lead_Source` = `Upwork`.
+- Leads are created on the Upwork layout. Its required fields are `Lead_Status` = `Submitted Proposal`, `Last_Name` = `TBD`, and `Lead_Source` = `Upwork`.
 - The **Won** button posts to the app; it doesn't set a Zoho field.
 - `Company` stays blank at Lead creation and is not sent back.
 - `Proposal_Link` is the current proposal link field. `Hourly` (boolean) is legacy and not set.

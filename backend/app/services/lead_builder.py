@@ -78,7 +78,7 @@ def build_payload(
     payload: dict[str, Any] = {
         "Last_Name": "TBD",
         "Lead_Source": "Upwork",
-        "Lead_Status": "New Lead",
+        "Lead_Status": "Submitted Proposal",
     }
     if job.upwork_job_id:
         payload["Upwork_Job_ID"] = job.upwork_job_id
