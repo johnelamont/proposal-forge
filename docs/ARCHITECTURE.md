@@ -119,7 +119,7 @@ def parse_job_post(raw: str) -> ParsedJob:
 **Decision:** Exchange data with the operator's Zoho CRM through the Zoho CRM REST API, keyed on the Upwork Job ID. Transport, auth, and tenancy are in [ADR-005](ADRs/ADR-005-zoho-integration.md). Field mapping and Zoho-side setup are in [ZOHO_INTEGRATION.md](ZOHO_INTEGRATION.md).
 
 1. **Lead out.** When the proposal has been pasted into Upwork and submitted, the user clicks **Create Lead**. The backend upserts a Lead in Zoho.
-2. **Outcome in.** The user later records the result on the Lead in Zoho: a **Won** button, or a `Lead_Status` of `Lost Lead`, `Job Closed`, or `Withdrawn`. Zoho posts it to the app, which records it and indexes it for RAG.
+2. **Outcome in.** The user later records the result on the Lead in Zoho: a **Won** button, or a `Lead_Status` change to a lost status (`Lost Lead`, `Job Closed`, `Junk Lead`, `Not Qualified`) or `Withdrawn`, which a workflow rule posts ([ADR-006](ADRs/ADR-006-outcome-trigger.md)). Zoho posts it to the app, which records it and indexes it for RAG.
 
 **Why it works this way:**
 - **Nobody knows the outcome at proposal time.** The app can't know a proposal is won; that comes weeks later, if at all. The most it can do at submission is create a Lead.
@@ -140,9 +140,9 @@ def parse_job_post(raw: str) -> ParsedJob:
 - Sync state is tracked on the proposal (`pending` / `created` / `failed`). A failed call leaves the proposal `submitted` with a visible "Lead not created — retry".
 
 **Outcome in, in brief** ([contract](ZOHO_INTEGRATION.md#outcome-in--pushed-by-zoho)):
-- Zoho calls `POST /api/integrations/zoho/outcome` with the outcome (`won`, `withdrawn`, or `lost` with a `lost_reason` of `hired_other` or `job_closed`), the Upwork Job ID, and allow-listed Lead fields.
+- Zoho calls `POST /api/integrations/zoho/outcome` with the outcome (`won`, `withdrawn`, or `lost` with a `lost_reason` of `hired_other`, `job_closed`, `junk_lead` or `not_qualified`), the Upwork Job ID, and allow-listed Lead fields.
 - One `SECURITY DEFINER` function matches the proposal, appends to `proposal_outcomes`, and writes the `rag_index` row from the version that was actually copied, all in one transaction.
-- The **Won** button shows the operator the result (recorded, held for review, or the error). An unmatched job ID is held in a review queue, never dropped. The app lists proposals still `submitted` after N days, so missed outcomes are visible.
+- The **Won** button shows the operator the result (recorded, held for review, or the error); the workflow function writes it to the `Forge_Sync` field on the Lead and emails on error. An unmatched job ID is held in a review queue, never dropped. The app lists proposals still `submitted` after N days, so missed outcomes are visible.
 
 **Trade-off:** One extra click per proposal (Create Lead), Zoho OAuth for Lead creation, a public endpoint to secure, and two Deluge functions deployed by hand. In return, outcomes are recorded once, where the user already works. The RAG stays current without double entry, and the app never has read access to client data in Zoho.
 
@@ -194,14 +194,15 @@ def parse_job_post(raw: str) -> ParsedJob:
 
 7. Weeks later: user follows up on Upwork and records the result in Zoho
    → Won: clicks the Won button on the Lead
-   → Lost / withdrawn: sets Lead_Status (Lost Lead, Job Closed, Withdrawn)
+   → Lost / withdrawn: sets Lead_Status (Lost Lead, Job Closed, Junk Lead,
+     Not Qualified, Withdrawn); a workflow rule fires
 
 8. Zoho posts to POST /api/integrations/zoho/outcome (per-user secret)
    → Allow-listed Lead fields only; anything else rejected
    → Matched on upwork_job_id (unmatched → review queue)
    → Outcome appended to proposal_outcomes; status: won | lost | withdrawn
    → rag_index updated from the copied (approved) version
-   → Won button shows the result to the user
+   → Won button shows the result; the workflow writes Forge_Sync, emails on error
 
 9. Next proposal on same vertical:
    → Query rag_index for similar outcomes
