@@ -118,6 +118,8 @@ Upwork exposes no contact details or regulated data in job posts. Sections that 
 | **Failure path (R8)** | Nothing selected → `422`; profile not ready → `409`; renderer error → `500` with no row and no file; data changed since preview → `409` and the preview is marked stale; export row not written → no file. A soft cap of 40 entries. |
 | **ToS / legal (R4)** | No external system: the operator's own data rendered to a file they attach by hand. Nothing is sent to Upwork or anywhere else by the app. |
 
+*Built 2026-10-12 (PR #34 design, #35 backend, #36 screen). Satisfied in code and tests: `backend/tests/test_portfolio.py` (client name only with `may_name_client`, no money or provenance fields, date range and order, results as counts excluding not-worth-bidding, canonical hash, deterministic render, preview records nothing, approve logs then downloads the exact previewed bytes, stale hash → 409 with no row, empty selection → 422, profile not ready → 409, renderer fault → 500 with nothing exported, row not written → no file), migration `20261012170000_portfolio_exports.sql` (append-only trigger). The sample render was checked by eye.*
+
 ### F8 — Outcome feedback into RAG
 
 | | |
