@@ -69,11 +69,15 @@ def _period(entry: dict[str, Any]) -> str | None:
 
 
 def _client_line(entry: dict[str, Any]) -> str | None:
+    """Named only with permission; anonymised to the vertical otherwise; and
+    nothing at all when the entry has no client (own products, open source)."""
     name = (entry.get("client_name") or "").strip()
-    if entry.get("may_name_client") and name:
+    if not name:
+        return None
+    if entry.get("may_name_client"):
         return f"for {name}"
     vertical = (entry.get("vertical") or "").strip()
-    return f"for a {vertical} client" if vertical else None
+    return f"for a {vertical} client" if vertical else "for a client"
 
 
 def _in_range(entry: dict[str, Any], from_: str | None, to: str | None) -> bool:
@@ -130,9 +134,11 @@ def build_manifest(
         if (e.get("client_name") or "").strip() and not e.get("may_name_client")
     )
     if unnamed:
-        plural = "y" if unnamed == 1 else "ies"
+        noun, verb, be = (
+            ("entry", "records", "is") if unnamed == 1 else ("entries", "record", "are")
+        )
         warnings.append(
-            f"{unnamed} entr{plural} record a client name but are not "
+            f"{unnamed} {noun} {verb} a client name but {be} not "
             'marked "OK to name"; the client is not shown.'
         )
 
