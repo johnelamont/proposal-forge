@@ -18,6 +18,7 @@ Field names below are Zoho API names from the operator's Leads module metadata (
    - a shared helper that builds the allow-listed payload and posts it;
    - the **Won** button on the Lead (Upwork layout), which calls the helper with `won` and shows the result message;
    - *Trigger to be decided:* how `Lost Lead`, `Job Closed`, and `Withdrawn` are sent (workflow rule on `Lead_Status`, buttons, or something else). Whatever is chosen calls the same helper, and must show or notify the result on failure. The endpoint already accepts these outcomes.
+   - *To resolve with F8:* the Lead-out upsert sends `Lead_Status` = `Submitted Proposal` on every press, including an update. Once outcomes are recorded in Zoho, a later **Update Lead** would reset a `Lost Lead` back to `Submitted Proposal`; the update path should then omit `Lead_Status`, or the app should refuse to update a Lead whose outcome is already recorded.
 
 ## Lead out — on **Create Lead**
 
@@ -51,9 +52,11 @@ Notes:
 1. **AI-derived fields (Rule 3).** `Industry` and `Job_Type` are constrained to the picklists below. Each AI-derived field carries a confidence value; below its threshold (`Industry` 0.7, `Job_Type` 0.7, `Tools` 0.6, recorded in [feature register F6](governance/FEATURE_REGISTER.md) and `backend/app/config/picklists.json`) the field is flagged in the pre-send preview and must be confirmed or edited. A value not on the picklist is always flagged.
 2. **Length limits.** Values longer than a field's limit (e.g., `Skills_Required` at 255) are shown truncated in the preview before sending, never silently cut.
 
-### Picklists (confirmed 2026-10-11)
+### Picklists (confirmed 2026-10-11, applied in Zoho 2026-10-12)
 
 The operator replaced the six-year-old values with one vocabulary shared with Work history. The canonical copy is `backend/app/config/picklists.json` (mirrored in `frontend/src/lib/picklists.json`); Zoho must match it. When deleting old values in Zoho, use its *replace* option so existing Leads keep a value.
+
+Note on behaviour (operator, 2026-10-12): the Zoho CRM API accepts a picklist value that is not on the picklist; it does not return `INVALID_DATA`. The record is saved with that value, but the UI only offers the defined values in filters and searches, so such records cannot be found by that field. Keeping the two lists identical is therefore about findability in Zoho, not about the upsert succeeding.
 
 - `Industry`:
   - Finance & Accounting
