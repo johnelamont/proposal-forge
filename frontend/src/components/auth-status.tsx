@@ -34,6 +34,9 @@ export async function AuthStatus() {
         <Link href="/profile" className="underline">
           Profile
         </Link>
+        <Link href="/settings/zoho" className="underline">
+          Zoho
+        </Link>
       </nav>
       <p className="text-sm">
         Signed in as <span className="font-medium">{user.email}</span>

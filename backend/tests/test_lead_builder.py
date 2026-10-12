@@ -56,7 +56,7 @@ def test_payload_fields_from_the_mortgage_fixture(desktop_conflict):
     )
     assert payload["Last_Name"] == "TBD"
     assert payload["Lead_Source"] == "Upwork"
-    assert payload["Lead_Status"] == "New Lead"
+    assert payload["Lead_Status"] == "Submitted Proposal"
     assert payload["Upwork_Job_ID"] == "~021000000000000000002"
     assert payload["Job_Link"] == "https://www.upwork.com/jobs/~021000000000000000002"
     assert payload["Job_Name"] == "Looking for Zoho Implementer for CRM"

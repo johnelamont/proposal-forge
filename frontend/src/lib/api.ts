@@ -18,6 +18,14 @@ import type {
   WorkHistoryPatch,
   WorkHistorySummary,
 } from "@/lib/types/work-history";
+import type {
+  ConnectionStatus,
+  ConnectStart,
+  CreateLeadResult,
+  LeadAttempt,
+  LeadFieldsIn,
+  LeadPreview,
+} from "@/lib/types/zoho";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -175,6 +183,33 @@ export const proposalsApi = {
         content_hash,
       }),
     }),
+};
+
+export const zohoApi = {
+  status: () => apiFetch<ConnectionStatus>("/api/integrations/zoho/status"),
+  connect: () => apiFetch<ConnectStart>("/api/integrations/zoho/connect"),
+  complete: (code: string, state: string) =>
+    apiFetch<ConnectionStatus>("/api/integrations/zoho/complete", {
+      method: "POST",
+      body: JSON.stringify({ code, state }),
+    }),
+  disconnect: () =>
+    apiFetch<void>("/api/integrations/zoho/connection", { method: "DELETE" }),
+  leadPreview: (proposalId: string, reclassify = false) =>
+    apiFetch<LeadPreview>(
+      `/api/proposals/${proposalId}/lead-preview${reclassify ? "?reclassify=true" : ""}`,
+    ),
+  setLeadFields: (proposalId: string, fields: LeadFieldsIn) =>
+    apiFetch<LeadPreview>(`/api/proposals/${proposalId}/lead-fields`, {
+      method: "PUT",
+      body: JSON.stringify(fields),
+    }),
+  createLead: (proposalId: string) =>
+    apiFetch<CreateLeadResult>(`/api/proposals/${proposalId}/create-lead`, {
+      method: "POST",
+    }),
+  leadAttempts: (proposalId: string) =>
+    apiFetch<LeadAttempt[]>(`/api/proposals/${proposalId}/lead-attempts`),
 };
 
 export const workHistoryApi = {
