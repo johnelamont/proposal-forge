@@ -99,7 +99,7 @@ Win rate by vertical, budget band and tech stack; proposals per month; abandon r
 
 - **Zoho**: connect/disconnect (OAuth, Leads create/update only), connection status, last Lead created.
 - **Outcome webhook**: the per-user secret (show once, rotate), the endpoint URL to paste into the Deluge function, last outcome received.
-- **Review queue** (`/settings/review-queue`): outcomes that arrived with a job ID the app couldn't match — each with the payload Zoho sent and a "match to proposal" picker, or dismiss. (F8 R8: unmatched → held, never dropped.)
+- **Review queue** (`/settings/review-queue`): outcomes that arrived with a job ID the app couldn't match — each with the payload Zoho sent and a "match to proposal" picker, or dismiss. (F8 R8: unmatched → held, never dropped.) Design: [F8_OUTCOMES.md](F8_OUTCOMES.md).
 - **Naming**: default for "OK to name this client" on new work-history rows (default off).
 - **Account**: email, password change, sign out.
 
@@ -136,4 +136,4 @@ Win rate by vertical, budget band and tech stack; proposals per month; abandon r
 
 - **F5 input is dropped files, not a folder.** The operator drops the files to evaluate (usually a `README.md`). No directory access, no local CLI.
 - **Offline is not a requirement.** Earlier docs listed it as a PWA benefit; it was never a goal.
-- **Stale `submitted` nudge**: a setting, default 14 days. Finalise with F8.
+- **Stale `submitted` nudge**: a setting, default 14 days. Finalised 2026-10-12 in the [F8 design](F8_OUTCOMES.md): `profiles.stale_submitted_days`, edited on Profile, read by the Outcome tab and the Attention strip.
