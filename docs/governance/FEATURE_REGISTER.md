@@ -112,9 +112,11 @@ Upwork exposes no contact details or regulated data in job posts. Sections that 
 |---|---|
 | **Classification** | **High-stakes** |
 | **Why** | Public-facing: attached to job applications; misstatements affect reputation. |
-| **Approval / audit (R1, R2)** | Preview + explicit approve before download; record who exported what (content hash) and when. |
-| **Data (R5)** | Exclude client names unless the operator has marked that client as OK to name. |
-| **Failure path (R8)** | Generation errors halt the export; no partial PDF. |
+| **AI involvement** | **None.** The PDF is assembled deterministically from records the operator already confirmed (profile, F5 work history, F8 outcome counts). No Claude call, so no confidence signal (R3) and no AI disclosure (R9) apply; the footer states the document was prepared from the consultant's own records. Design: [F7_PORTFOLIO.md](../F7_PORTFOLIO.md). |
+| **Approval / audit (R1, R2)** | Preview, then one **Approve and download** button labelled as the approval. The server rebuilds the document from a canonical manifest and refuses (`409`) if it differs from what was previewed, so the approval covers exactly the document seen. Every export is a row in append-only `portfolio_exports` (who, when, manifest hash, PDF hash, selection), written before the file is returned; no record → no file. |
+| **Data in the document (R5)** | Operator's name and positioning; per selected entry: name, period, role, vertical, summary, tech stack, outcomes. `client_name` only where `may_name_client` is true (default false), otherwise "for a [vertical] client". Never: `budget_band`, source files, extraction provenance, detected client names, Upwork job titles, Lead or client data. Results section carries counts and industry names only, and omits "not worth bidding" outcomes. |
+| **Failure path (R8)** | Nothing selected → `422`; profile not ready → `409`; renderer error → `500` with no row and no file; data changed since preview → `409` and the preview is marked stale; export row not written → no file. A soft cap of 40 entries. |
+| **ToS / legal (R4)** | No external system: the operator's own data rendered to a file they attach by hand. Nothing is sent to Upwork or anywhere else by the app. |
 
 ### F8 — Outcome feedback into RAG
 
