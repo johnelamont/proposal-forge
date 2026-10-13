@@ -23,6 +23,8 @@ class ProfileIn(BaseModel):
     greeting: str = Field(default="Hi,", max_length=80)
     sign_off: str = Field(default="Kind Regards,", max_length=80)
     tone_notes: str = Field(default="", max_length=2000)
+    # Cover-letter length target. 'none' keeps the original rule: no limit.
+    cover_letter_length: Literal["short", "medium", "none"] = "none"
     never_claim: list[str] = Field(default_factory=list, max_length=20)
     default_hourly_rate: Decimal | None = Field(default=None, ge=0)
     fixed_price_range: str | None = Field(default=None, max_length=80)
@@ -108,6 +110,8 @@ class AiMeta(BaseModel):
     failure: AiFailure | None = None
     # F8: titles of the won proposals whose excerpts were in the prompt.
     won_examples_used: list[str] = Field(default_factory=list)
+    # The length target the draft was given, e.g. "short (about 120–180 words)".
+    length_target: str | None = None
 
 
 class DraftVersion(BaseModel):

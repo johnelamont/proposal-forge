@@ -44,8 +44,9 @@ PROJECTS, and never by client name.
 in the order given, starting with the substance (not "Great question").
 - Write plainly and completely: short paragraphs, specific, no marketing \
 language, no exclamation marks, no "I am excited", no bullet lists unless \
-the question asks for a list. There is no length limit; say what needs \
-saying and stop.
+the question asks for a list. Unless a LENGTH target is given, there is no \
+length limit; say what needs saying and stop. When one is given, keep the \
+cover letter within it and let the answers be as long as they need.
 - Do not write a greeting or a sign-off; the consultant's own are added \
 afterwards. Begin the cover letter with the first sentence of substance.
 - Follow TONE NOTES where given.
@@ -123,6 +124,17 @@ def questions_for(analysis: JobAnalysis, extra_questions: list[str]) -> list[str
     return out
 
 
+# Cover-letter length targets, by profile setting. 'none' adds nothing.
+LENGTH_TARGETS = {
+    "short": "short (about 120–180 words)",
+    "medium": "medium (about 200–300 words)",
+}
+
+
+def length_target(profile: Profile) -> str | None:
+    return LENGTH_TARGETS.get(getattr(profile, "cover_letter_length", "none"))
+
+
 # Fields of a won past proposal (rag_index row) that may cross the R5
 # boundary: the operator's own title/category and their own copied text.
 WON_EXAMPLE_FIELDS = ("job_title", "industry", "proposal_excerpt")
@@ -140,6 +152,9 @@ def build_draft_prompt(
     parts = ["CONSULTANT", profile.positioning.strip() or "(no positioning given)"]
     if profile.tone_notes.strip():
         parts += ["", "TONE NOTES", profile.tone_notes.strip()]
+    target = length_target(profile)
+    if target:
+        parts += ["", f"LENGTH: cover letter {target}."]
     parts += ["", f"JOB: {job.title or '(untitled)'}"]
     if job.skills:
         parts.append("Skills listed: " + ", ".join(job.skills))
@@ -234,7 +249,12 @@ class Drafter:
                     cover_letter=None,
                     answers=[Answer(question=q, answer="") for q in questions],
                 ),
-                AiMeta(model=self._model, failure=result, won_examples_used=used),
+                AiMeta(
+                    model=self._model,
+                    failure=result,
+                    won_examples_used=used,
+                    length_target=length_target(profile),
+                ),
             )
 
         answers = _align_answers(result.answers, questions)
@@ -252,6 +272,7 @@ class Drafter:
                 confidence=result.confidence.model_dump(),
                 warnings=warnings,
                 won_examples_used=used,
+                length_target=length_target(profile),
             ),
         )
 

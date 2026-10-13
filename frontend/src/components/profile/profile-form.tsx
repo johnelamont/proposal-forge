@@ -176,6 +176,27 @@ export function ProfileForm() {
           </Field>
 
           <Field
+            label="Cover letter length"
+            hint="A target the drafter is told; answers are never capped. Each version records the target it was given."
+          >
+            <select
+              value={v.cover_letter_length ?? "none"}
+              onChange={(e) =>
+                setV((cur) => ({
+                  ...cur,
+                  cover_letter_length: e.target
+                    .value as ProfileIn["cover_letter_length"],
+                }))
+              }
+              className={INPUT + " sm:w-72"}
+            >
+              <option value="none">No limit — say what needs saying</option>
+              <option value="medium">Medium — about 200–300 words</option>
+              <option value="short">Short — about 120–180 words</option>
+            </select>
+          </Field>
+
+          <Field
             label="Never claim"
             hint="Comma-separated phrases a draft must never assert about you, e.g. “Zoho Partner, certified”. If one appears, the draft is flagged."
           >

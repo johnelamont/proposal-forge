@@ -21,7 +21,7 @@ One row per operator (`profiles`): `signature_name`, `positioning` (who they are
 | Never claim partnership, membership, certification, affiliation | explicit instruction | `never_claim` phrases found in the text → **warning on the version**, shown; never silently edited |
 | Never invent experience; cite only the projects given, never by client name | explicit instruction | R5: only allow-listed fields of F2's cited projects are sent |
 | One answer per question, in order | explicit instruction | answers aligned to the operator's question list by position; missing → blank + warning |
-| No length cap; plain, complete, no hype | explicit instruction | — |
+| No length cap by default; plain, complete, no hype. Since 2026-10-13 the profile can set a cover-letter target (short ~120–180 words, medium ~200–300, or none), passed as a LENGTH line and recorded in `ai_meta.length_target` | explicit instruction + profile setting | — |
 
 ## What crosses the R5 boundary
 

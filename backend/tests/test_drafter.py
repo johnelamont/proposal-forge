@@ -158,6 +158,22 @@ def test_draft_failure_yields_empty_sections_and_the_failure(desktop_conflict):
     assert meta.failure is not None and meta.failure.kind == "error"
 
 
+# --- length target ------------------------------------------------------------
+
+
+def test_length_target_is_optional_and_recorded(desktop_conflict):
+    a = analysis(desktop_conflict)
+    assert "LENGTH" not in build_draft_prompt(a, None, [], PROFILE, [])
+    short = PROFILE.model_copy(update={"cover_letter_length": "short"})
+    prompt = build_draft_prompt(a, None, [], short, [])
+    assert "LENGTH: cover letter short (about 120–180 words)." in prompt
+    client = FakeClient(result=_response(good_draft([])))
+    _, meta = Drafter(client, "m").draft(a, None, [], short, [])
+    assert meta.length_target == "short (about 120–180 words)"
+    _, none_meta = Drafter(client, "m").draft(a, None, [], PROFILE, [])
+    assert none_meta.length_target is None
+
+
 # --- refine ------------------------------------------------------------------
 
 

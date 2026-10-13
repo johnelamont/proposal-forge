@@ -142,6 +142,13 @@ export function ProposalWorkspace({ id }: { id: string }) {
         </div>
       )}
 
+      {meta?.length_target && !failed && (
+        <p className="text-xs text-neutral-500">
+          Drafted to a {meta.length_target} cover letter (Profile → Cover letter
+          length).
+        </p>
+      )}
+
       {meta && meta.warnings.length > 0 && !failed && (
         <p className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
           {meta.warnings.join(" ")}
