@@ -69,3 +69,10 @@ Manifest: client name present only with `may_name_client`; budget band, source f
 1. **F7a** — register entry completed and this design (docs PR).
 2. **F7b** — migration, manifest builder, renderer, routes, tests.
 3. **F7c** — the `/portfolio` screen, nav link, completion docs.
+
+## As built (2026-10-12)
+
+- An entry with no client at all (own product, open source) gets no "for …" line rather than "for a [vertical] client".
+- The results line reads "N proposals won, M not selected, K withdrawn"; "not selected" covers both lost reasons that mean a bid was placed.
+- A4 only for now; Letter is a one-line change in the renderer.
+- The export response carries `X-Content-Hash`, `X-Pdf-Hash` and `X-Page-Count` headers beside the file, so a client can show what it got.

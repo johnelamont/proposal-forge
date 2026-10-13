@@ -28,6 +28,12 @@ import type {
   SecretStatus,
 } from "@/lib/types/outcomes";
 import type {
+  ExportRecord,
+  PortfolioEntryOption,
+  PreviewOut,
+  Selection,
+} from "@/lib/types/portfolio";
+import type {
   ConnectionStatus,
   ConnectStart,
   CreateLeadResult,
@@ -254,6 +260,51 @@ export const outcomesApi = {
     apiFetch<{ rebuilt: number }>("/api/outcomes/rebuild-index", {
       method: "POST",
     }),
+};
+
+export const portfolioApi = {
+  entries: () => apiFetch<PortfolioEntryOption[]>("/api/portfolio/entries"),
+  preview: (selection: Selection) =>
+    apiFetch<PreviewOut>("/api/portfolio/preview", {
+      method: "POST",
+      body: JSON.stringify(selection),
+    }),
+  /** The approval. The server re-renders, checks the hash, logs, then
+   * returns the PDF; a 409 means the document changed since the preview. */
+  export: async (selection: Selection, content_hash: string) => {
+    const token = await accessToken();
+    let response: Response;
+    try {
+      response = await fetch(API_URL + "/api/portfolio/exports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ selection, content_hash }),
+      });
+    } catch {
+      throw new ApiError(0, "Could not reach the backend. Is it running?");
+    }
+    if (!response.ok) {
+      let detail = response.statusText;
+      try {
+        const body = await response.json();
+        if (typeof body.detail === "string") detail = body.detail;
+      } catch {
+        // keep statusText
+      }
+      throw new ApiError(response.status, detail);
+    }
+    const disposition = response.headers.get("content-disposition") ?? "";
+    const match = /filename="([^"]+)"/.exec(disposition);
+    return {
+      blob: await response.blob(),
+      filename: match?.[1] ?? "portfolio.pdf",
+      contentHash: response.headers.get("x-content-hash"),
+    };
+  },
+  exports: () => apiFetch<ExportRecord[]>("/api/portfolio/exports"),
 };
 
 export const workHistoryApi = {
