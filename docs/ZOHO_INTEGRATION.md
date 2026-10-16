@@ -37,7 +37,7 @@ Field names below are Zoho API names from the operator's Leads module metadata (
 | `Proposal_Date` | date | Date of the **Create Lead** click | App |
 | `Proposal` | textarea(32000) | The copied (approved) proposal text, all sections | `proposal_approvals` |
 | `Rate_Type` | picklist: Hourly / Fixed | Job's rate type | Parsed |
-| `Hourly_Rate` | currency | Quoted rate, if hourly | Approved quote |
+| `Hourly_Rate` | currency, **layout-required** | Quoted rate if the quote is hourly, otherwise `0` (Zoho refuses the Lead without it; fixed 2026-10-16) | Approved quote |
 | `Upwork_Fixed_Price` | currency | Quoted price, if fixed | Approved quote |
 | `Budget` | double | Client's posted budget | Parsed |
 | `Skills_Required` | text(255) | Skills listed on the job, comma-separated | Parsed |

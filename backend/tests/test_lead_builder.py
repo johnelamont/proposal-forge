@@ -85,6 +85,18 @@ def test_lead_status_only_on_first_send(desktop_conflict):
     assert update["Last_Name"] == "TBD" and update["Lead_Source"] == "Upwork"
 
 
+def test_fixed_quote_sends_zero_hourly_rate(desktop_conflict):
+    # Hourly_Rate is layout-required in Zoho; a fixed-price Lead must still carry it.
+    a = analysis(desktop_conflict)
+    version = approved_version(
+        "Hi, Letter. Kind Regards, J", quote_amount="9500", quote_model="fixed"
+    )
+    payload, _ = build_payload(a, "text", version, None, GOOD, date(2026, 10, 16))
+    assert payload["Upwork_Fixed_Price"] == 9500.0 and payload["Hourly_Rate"] == 0.0
+    no_quote, _ = build_payload(a, None, None, None, GOOD, date(2026, 10, 16))
+    assert no_quote["Hourly_Rate"] == 0.0 and "Upwork_Fixed_Price" not in no_quote
+
+
 def test_confirmed_fields_override_the_classifier(desktop_conflict):
     a = analysis(desktop_conflict)
     fields = LeadFields(

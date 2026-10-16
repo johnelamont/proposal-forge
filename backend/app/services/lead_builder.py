@@ -99,6 +99,10 @@ def build_payload(
         payload["Rate_Type"] = "Fixed"
         if e.fixed_budget is not None:
             payload["Budget"] = float(e.fixed_budget)
+    # Hourly_Rate is required on the Upwork layout, so it is always sent: the
+    # quoted rate for an hourly quote, 0 otherwise (a fixed-price Lead was
+    # refused for the missing field; operator's fix, 2026-10-16).
+    payload["Hourly_Rate"] = 0.0
     if approved and approved.quote and approved.quote.amount is not None:
         if approved.quote.model == "hourly":
             payload["Hourly_Rate"] = float(approved.quote.amount)
