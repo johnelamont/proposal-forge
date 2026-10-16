@@ -7,6 +7,7 @@ export interface ProfileIn {
   greeting: string;
   sign_off: string;
   tone_notes: string;
+  cover_letter_length: "short" | "medium" | "none";
   never_claim: string[];
   default_hourly_rate: string | null;
   fixed_price_range: string | null;
@@ -28,6 +29,7 @@ export const EMPTY_PROFILE: ProfileIn = {
   greeting: "Hi,",
   sign_off: "Kind Regards,",
   tone_notes: "",
+  cover_letter_length: "none",
   never_claim: [],
   default_hourly_rate: null,
   fixed_price_range: null,
@@ -66,6 +68,8 @@ export interface AiMeta {
   confidence: Record<string, number>;
   warnings: string[];
   failure: AiFailure | null;
+  won_examples_used?: string[];
+  length_target?: string | null;
 }
 
 export interface DraftVersion {
