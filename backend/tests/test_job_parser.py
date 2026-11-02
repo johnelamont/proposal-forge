@@ -251,6 +251,26 @@ def test_summary_block_skills_activity_client(desktop_summary_block):
     assert job.unparsed_lines == []
 
 
+def test_summary_peel_only_takes_upwork_labels_and_badges_are_dropped(desktop_hourly):
+    # A client's prose that begins "Something: …" must stay in the description.
+    raw = desktop_hourly.replace(
+        "Summary\nNorthwind Funding",
+        "Summary\nContract Opportunity: Systems Analyst\n\nNorthwind Funding",
+    ).replace("\nMore than 30 hrs/week", "\nFeatured Job\nMore than 30 hrs/week")
+    job = parse_job_post(raw)
+    assert job.summary_fields == {}
+    assert job.description.startswith("Contract Opportunity: Systems Analyst")
+    assert "Featured Job" not in job.description and job.unparsed_lines == []
+    assert job.engagement.hours_per_week == "gt30"
+
+
+def test_posted_yesterday_is_recognised(desktop_hourly):
+    job = parse_job_post(
+        desktop_hourly.replace("Posted 8 hours ago", "Posted yesterday")
+    )
+    assert job.posted_ago_raw == "Posted yesterday" and job.unparsed_lines == []
+
+
 def test_description_is_a_verbatim_slice_of_the_paste(desktop_conflict):
     job = parse_job_post(desktop_conflict)
     assert job.description in desktop_conflict
