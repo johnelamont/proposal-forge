@@ -192,7 +192,8 @@ def test_mobile_fixture_client_and_history_header_only(mobile_relayed):
 
 
 @pytest.mark.parametrize(
-    "fixture_name", ["desktop_hourly", "desktop_conflict", "mobile_relayed"]
+    "fixture_name",
+    ["desktop_hourly", "desktop_conflict", "mobile_relayed", "desktop_summary_block"],
 )
 def test_claude_input_contains_only_prose(fixture_name, request):
     raw = request.getfixturevalue(fixture_name)
@@ -203,6 +204,51 @@ def test_claude_input_contains_only_prose(fixture_name, request):
     assert job.description in prompt
     for skill in job.skills:
         assert skill in prompt
+
+
+# --- desktop with the newer Summary block (2026-11) ----------------------------
+
+
+def test_summary_block_is_peeled_off_and_prose_is_kept(desktop_summary_block):
+    job = parse_job_post(desktop_summary_block)
+    assert job.source_format == "desktop"
+    assert job.title.startswith("Zoho CRM Expert Needed")
+    assert job.summary_fields == {
+        "Project Type": "Initial setup with potential for ongoing collaboration",
+        "Experience Level": "Expert",
+        "Hourly Budget": "$20–$50/hour",
+        "Start Date": "ASAP",
+    }
+    assert job.description.startswith("About the Project")
+    assert "email cadences" in job.description
+    assert job.description.rstrip().endswith("with the right person.")
+    assert "Not Sure" not in job.description
+    assert job.recognised
+
+
+def test_summary_block_engagement_prefers_the_engagement_block(desktop_summary_block):
+    eng = parse_job_post(desktop_summary_block).engagement
+    assert eng.hours_per_week is None and eng.hours_per_week_raw == "Not Sure"
+    assert eng.payment_type == "hourly" and eng.duration == "1to3m"
+    assert eng.experience_level == "expert"
+    # The engagement block says $25–$65; the Summary block's $20–$50 is kept
+    # verbatim in summary_fields, not used to overwrite.
+    assert (eng.hourly_rate_min, eng.hourly_rate_max) == (
+        Decimal("25.00"),
+        Decimal("65.00"),
+    )
+    assert eng.project_type == "ongoing"
+
+
+def test_summary_block_skills_activity_client(desktop_summary_block):
+    job = parse_job_post(desktop_summary_block)
+    assert len(job.skills) == 8 and "Zoho CRM" in job.skills
+    assert (job.activity.proposals_min, job.activity.proposals_max) == (50, None)
+    assert job.activity.interviewing == 4 and job.activity.bid_avg == Decimal("37.00")
+    assert (job.connects.required, job.connects.available) == (15, 137)
+    assert job.client.hire_rate_pct == 34 and job.client.hires == 1
+    assert job.upwork_job_id == "~022100000000000000004"
+    assert job.unparsed_lines == []
 
 
 def test_description_is_a_verbatim_slice_of_the_paste(desktop_conflict):

@@ -109,6 +109,9 @@ class ParsedJob(BaseModel):
     connects: Connects = Field(default_factory=Connects)
     client: Client = Field(default_factory=Client)
     questions: list[Question] = Field(default_factory=list)
+    # Upwork's newer Summary block (Project Type, Experience Level, Hourly
+    # Budget, Start Date, ...) as label → value, kept verbatim for display.
+    summary_fields: dict[str, str] = Field(default_factory=dict)
     unparsed_lines: list[str] = Field(default_factory=list)
 
     @property

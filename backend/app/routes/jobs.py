@@ -144,6 +144,23 @@ def reread_job(job_id: str, db: Db, reader: Reader) -> JobPostOut:
     return _row_to_out(row)
 
 
+@router.post("/{job_id}/reparse", response_model=JobPostOut)
+def reparse_job(job_id: str, db: Db, reader: Reader) -> JobPostOut:
+    """Run both layers again on the stored paste (after a parser fix for a
+    layout the parser had not seen). The decision is kept; the advisory is
+    cleared because the description it read may have changed."""
+    row = _load(db, job_id)
+    analysis = job_analysis.analyse_job_post(row["raw_paste"], reader)
+    try:
+        row = db.update_job_post(
+            job_id,
+            {**_analysis_columns(analysis), "advisory": None, "advisory_at": None},
+        )
+    except DbError as e:
+        raise HTTPException(e.status_code, e.detail) from e
+    return _row_to_out(row)
+
+
 @router.patch("/{job_id}/link", response_model=JobPostOut)
 def set_job_link(job_id: str, body: LinkRequest, db: Db) -> JobPostOut:
     """Supply the job link a mobile paste lacks. Accepts a URL or a bare ID."""

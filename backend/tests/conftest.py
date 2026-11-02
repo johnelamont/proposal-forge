@@ -22,3 +22,8 @@ def desktop_conflict() -> str:
 @pytest.fixture
 def mobile_relayed() -> str:
     return load_fixture("job_mobile_relayed_airtable_law_dashboard.txt")
+
+
+@pytest.fixture
+def desktop_summary_block() -> str:
+    return load_fixture("job_desktop_summary_block_zoho_cadences.txt")

@@ -76,6 +76,8 @@ export interface ParsedJob {
   connects: Connects;
   client: ClientStats;
   questions: Question[];
+  // Upwork's newer Summary block, label → value (absent on older rows).
+  summary_fields?: Record<string, string>;
   unparsed_lines: string[];
 }
 
