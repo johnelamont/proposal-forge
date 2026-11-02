@@ -42,7 +42,7 @@ RE_OTHER_JOBS = re.compile(r"^Other open jobs by this Client \((\d+)\)$")
 
 # --- Header -----------------------------------------------------------------
 
-RE_POSTED = re.compile(r"^Posted .+ ago$")
+RE_POSTED = re.compile(r"^Posted (.+ ago|yesterday|today)$")
 RE_LOCATION = re.compile(r"^(Worldwide|Only freelancers located in .+ may apply\.)$")
 RE_CONNECTS_REQUIRED = re.compile(r"^Send a proposal for: (\d+) Connects$")
 RE_CONNECTS_AVAILABLE = re.compile(r"^Available Connects: (\d+)$")
@@ -83,8 +83,23 @@ RE_EXPERIENCE_BLURB = re.compile(r"^I am (looking|willing) .+")
 # Hours-per-week values that carry no number (Upwork added "Not Sure").
 HOURS_UNKNOWN = {"Not Sure", "Not sure"}
 # The newer Summary block: a run of "Label: value" lines at the top of the
-# Summary section, before the prose (seen 2026-11).
+# Summary section, before the prose (seen 2026-11). Only Upwork's own labels
+# count: a client's prose may well start with "Something: …" of its own.
+SUMMARY_LABELS = {
+    "Project Type",
+    "Experience Level",
+    "Hourly Budget",
+    "Fixed Budget",
+    "Budget",
+    "Start Date",
+    "Duration",
+    "Workload",
+    "Hours per Week",
+    "Location",
+}
 RE_SUMMARY_FIELD = re.compile(r"^([A-Z][A-Za-z /]{1,40}): (.+)$")
+# Badge lines Upwork prints between the prose and the engagement block.
+BADGES = {"Featured Job"}
 RE_HOURLY_BUDGET = re.compile(r"^\$([\d,.]+)\s*[–-]\s*\$([\d,.]+)\s*/\s*h(ou)?r$")
 
 # --- Activity ---------------------------------------------------------------
@@ -151,6 +166,7 @@ def _is_engagement_line(line: str) -> bool:
     return bool(
         RE_HOURS.match(line)
         or line in HOURS_UNKNOWN
+        or line in BADGES
         or line in PAYMENT
         or line in DURATIONS
         or line in EXPERIENCE
@@ -198,7 +214,7 @@ def _split_summary_fields(lines: list[str]) -> tuple[dict[str, str], list[str]]:
             i += 1
             continue
         m = RE_SUMMARY_FIELD.match(line)
-        if not m:
+        if not m or m.group(1).strip() not in SUMMARY_LABELS:
             break
         fields[m.group(1).strip()] = m.group(2).strip()
         i += 1
@@ -225,6 +241,8 @@ def _parse_engagement(lines: list[str], eng: Engagement, unparsed: list[str]) ->
             eng.hours_per_week = HoursPerWeek.GT30 if more else HoursPerWeek.LT30
         elif line in HOURS_UNKNOWN:
             eng.hours_per_week_raw = line  # no number to normalise
+        elif line in BADGES:
+            continue  # "Featured Job": a badge, not data
         elif line in PAYMENT:
             if eng.payment_type is None:
                 eng.payment_type = PAYMENT[line]
