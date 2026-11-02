@@ -217,8 +217,9 @@ export function JobReview({ initial }: { initial: JobPost }) {
 
       <ReadingCard
         analysis={a}
-        busy={busy === "reread"}
+        busy={busy === "reread" || busy === "reparse"}
         onRetry={() => void run("reread", () => jobsApi.reread(job.id))}
+        onReparse={() => void run("reparse", () => jobsApi.reparse(job.id))}
       />
 
       <AdvisoryCard

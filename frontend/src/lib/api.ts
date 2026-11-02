@@ -108,6 +108,9 @@ export const jobsApi = {
   get: (id: string) => apiFetch<JobPost>(`/api/jobs/${id}`),
   reread: (id: string) =>
     apiFetch<JobPost>(`/api/jobs/${id}/reread`, { method: "POST" }),
+  /** Both layers again on the stored paste, after a parser fix. */
+  reparse: (id: string) =>
+    apiFetch<JobPost>(`/api/jobs/${id}/reparse`, { method: "POST" }),
   setLink: (id: string, job_link: string) =>
     apiFetch<JobPost>(`/api/jobs/${id}/link`, {
       method: "PATCH",

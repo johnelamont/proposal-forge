@@ -80,6 +80,12 @@ ENGAGEMENT_BOILERPLATE = {
     "-",
 }
 RE_EXPERIENCE_BLURB = re.compile(r"^I am (looking|willing) .+")
+# Hours-per-week values that carry no number (Upwork added "Not Sure").
+HOURS_UNKNOWN = {"Not Sure", "Not sure"}
+# The newer Summary block: a run of "Label: value" lines at the top of the
+# Summary section, before the prose (seen 2026-11).
+RE_SUMMARY_FIELD = re.compile(r"^([A-Z][A-Za-z /]{1,40}): (.+)$")
+RE_HOURLY_BUDGET = re.compile(r"^\$([\d,.]+)\s*[–-]\s*\$([\d,.]+)\s*/\s*h(ou)?r$")
 
 # --- Activity ---------------------------------------------------------------
 
@@ -144,6 +150,7 @@ def _split_sections(lines: list[str]) -> tuple[dict[str, list[str]], Client]:
 def _is_engagement_line(line: str) -> bool:
     return bool(
         RE_HOURS.match(line)
+        or line in HOURS_UNKNOWN
         or line in PAYMENT
         or line in DURATIONS
         or line in EXPERIENCE
@@ -180,6 +187,24 @@ def _parse_connects(line: str, connects: Connects) -> bool:
     return False
 
 
+def _split_summary_fields(lines: list[str]) -> tuple[dict[str, str], list[str]]:
+    """Peel off the newer Summary block: leading "Label: value" lines (blank
+    lines allowed between) before the prose. Returns the fields and the rest."""
+    fields: dict[str, str] = {}
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if not line:
+            i += 1
+            continue
+        m = RE_SUMMARY_FIELD.match(line)
+        if not m:
+            break
+        fields[m.group(1).strip()] = m.group(2).strip()
+        i += 1
+    return fields, lines[i:] if fields else lines
+
+
 def _split_summary(lines: list[str]) -> tuple[list[str], list[str]]:
     """The Summary section holds the prose followed by the unlabelled
     engagement block. The prose ends at the first recognised engagement line."""
@@ -198,6 +223,8 @@ def _parse_engagement(lines: list[str], eng: Engagement, unparsed: list[str]) ->
             eng.hours_per_week_raw = line
             more = m.group(1) == "More"
             eng.hours_per_week = HoursPerWeek.GT30 if more else HoursPerWeek.LT30
+        elif line in HOURS_UNKNOWN:
+            eng.hours_per_week_raw = line  # no number to normalise
         elif line in PAYMENT:
             if eng.payment_type is None:
                 eng.payment_type = PAYMENT[line]
@@ -322,6 +349,25 @@ def _parse_client(lines: list[str], client: Client, unparsed: list[str]) -> None
             unparsed.append(line)
 
 
+def _apply_summary_fields(fields: dict[str, str], eng: Engagement) -> None:
+    """The Summary block repeats what the engagement block says; it only
+    fills gaps, never overrides a parsed value."""
+    level = fields.get("Experience Level")
+    if eng.experience_level is None and level in EXPERIENCE:
+        eng.experience_level = EXPERIENCE[level]
+    ptype = (fields.get("Project Type") or "").lower()
+    if eng.project_type is None and ptype:
+        if "ongoing" in ptype:
+            eng.project_type = "ongoing"
+        elif "one" in ptype:
+            eng.project_type = "one_time"
+    budget = fields.get("Hourly Budget")
+    if budget and eng.hourly_rate_min is None and (m := RE_HOURLY_BUDGET.match(budget)):
+        eng.payment_type = eng.payment_type or PaymentType.HOURLY
+        eng.hourly_rate_min = _dec(m.group(1))
+        eng.hourly_rate_max = _dec(m.group(2))
+
+
 def _source_format(job: ParsedJob, sections: dict[str, list[str]]) -> str:
     history_entries = any(line for line in sections.get("history", []))
     if job.upwork_job_id or history_entries:
@@ -344,9 +390,11 @@ def parse_job_post(raw: str) -> ParsedJob:
 
     _parse_header(sections.get("header", []), job, unparsed)
 
-    prose, engagement = _split_summary(sections.get("summary", []))
+    job.summary_fields, rest = _split_summary_fields(sections.get("summary", []))
+    prose, engagement = _split_summary(rest)
     job.description = "\n".join(prose).strip()
     _parse_engagement(engagement, job.engagement, unparsed)
+    _apply_summary_fields(job.summary_fields, job.engagement)
 
     job.skills = [line for line in sections.get("skills", []) if line]
     _parse_preferred(

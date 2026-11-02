@@ -33,6 +33,15 @@ export function JobCard({ parsed }: { parsed: ParsedJob }) {
           ],
         ]}
       />
+      {parsed.summary_fields &&
+        Object.keys(parsed.summary_fields).length > 0 && (
+          <p className="mt-3 text-xs text-neutral-500">
+            Upwork summary:{" "}
+            {Object.entries(parsed.summary_fields)
+              .map(([k, v]) => `${k}: ${v}`)
+              .join(" · ")}
+          </p>
+        )}
       {parsed.skills.length > 0 && (
         <ul className="mt-3 flex flex-wrap gap-1.5">
           {parsed.skills.map((s) => (

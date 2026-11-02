@@ -38,10 +38,12 @@ export function ReadingCard({
   analysis,
   busy,
   onRetry,
+  onReparse,
 }: {
   analysis: JobAnalysis;
   busy: boolean;
   onRetry: () => void;
+  onReparse: () => void;
 }) {
   const { ai, ai_failure } = analysis;
 
@@ -52,9 +54,19 @@ export function ReadingCard({
           <p role="alert" className="text-sm text-red-700 dark:text-red-300">
             Not extracted — {ai_failure?.message ?? "no result"}.
             {ai_failure?.kind === "skipped"
-              ? " The structured fields above are still usable."
+              ? " The structured fields above are still usable. If Upwork changed its page layout, Re-parse runs the parser again on the stored paste."
               : " Everything else on this page is still usable."}
           </p>
+          {ai_failure?.kind === "skipped" && (
+            <button
+              type="button"
+              onClick={onReparse}
+              disabled={busy}
+              className="rounded border border-neutral-300 px-3 py-1.5 text-sm disabled:opacity-50 dark:border-neutral-700"
+            >
+              {busy ? "Re-parsing…" : "Re-parse"}
+            </button>
+          )}
           {ai_failure?.kind !== "skipped" && (
             <button
               type="button"

@@ -113,6 +113,25 @@ def test_duplicate_job_id_is_a_409(client, desktop_hourly):
     assert res.status_code == 409
 
 
+def test_reparse_runs_both_layers_and_clears_the_advisory(
+    client, db, reader, desktop_summary_block
+):
+    job = client.post(
+        "/api/jobs/parse", json={"raw_paste": desktop_summary_block}
+    ).json()
+    db.rows[job["id"]]["advisory"] = {"stale": True}
+    db.rows[job["id"]]["analysis"]["parsed"]["description"] = (
+        ""  # as stored before the fix
+    )
+    calls_before = reader.calls
+    res = client.post(f"/api/jobs/{job['id']}/reparse")
+    assert res.status_code == 200, res.text
+    out = res.json()
+    assert out["analysis"]["parsed"]["description"].startswith("About the Project")
+    assert out["analysis"]["parse_status"] == "ok" and out["advisory"] is None
+    assert reader.calls == calls_before + 1
+
+
 def test_reread_retries_only_the_ai_layer(client, reader, desktop_hourly):
     reader.result = AiFailure(kind="error", message="down")
     job_id = client.post("/api/jobs/parse", json={"raw_paste": desktop_hourly}).json()[
